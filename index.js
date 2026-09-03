@@ -65,12 +65,12 @@ function addPanoramaCubeMap () {
 
   const loader = new THREE.TextureLoader()
   const panorMaterials = [
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_1.png'), transparent: true, side: THREE.DoubleSide }), // WS
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_3.png'), transparent: true, side: THREE.DoubleSide }), // ES
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_4.png'), transparent: true, side: THREE.DoubleSide }), // Up
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_5.png'), transparent: true, side: THREE.DoubleSide }), // Down
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_0.png'), transparent: true, side: THREE.DoubleSide }), // NS
-    new THREE.MeshBasicMaterial({ map: loader.load('extra-textures/background/panorama_2.png'), transparent: true, side: THREE.DoubleSide }) // SS
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_1.png'), transparent: true, side: THREE.DoubleSide }), // WS
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_3.png'), transparent: true, side: THREE.DoubleSide }), // ES
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_4.png'), transparent: true, side: THREE.DoubleSide }), // Up
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_5.png'), transparent: true, side: THREE.DoubleSide }), // Down
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_0.png'), transparent: true, side: THREE.DoubleSide }), // NS
+    new THREE.MeshBasicMaterial({ map: loader.load('extras-textures/background/panorama_2.png'), transparent: true, side: THREE.DoubleSide }) // SS
   ]
 
   const panoramaBox = new THREE.Mesh(panorGeo, panorMaterials)
