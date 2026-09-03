@@ -1,0 +1,15 @@
+{
+  "defaultHost": "donutsmp.net",
+  "defaultHostPort": 25565,
+  "defaultProxy": "",
+  "defaultProxyPort": 0,
+  "defaultVersion": "1.21.11",
+  "minecraftAuth": "microsoft",
+  "azureClientId": "",
+  "azureDeviceType": "Win32",
+  "authTitleMode": "custom-azure",
+  "notes": {
+    "fabric": "This browser client can connect to Fabric servers when their protocol is compatible. It does not load Fabric client-side mods.",
+    "microsoft": "Use your own Azure app client ID. Do not put a client secret in the browser."
+  }
+}
