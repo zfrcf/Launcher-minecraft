@@ -60,8 +60,8 @@ const config = {
       Buffer: ['buffer', 'Buffer']
     }),
     new webpack.NormalModuleReplacementPlugin(
-      /prismarine-viewer[/|\\]viewer[/|\\]lib[/|\\]utils/,
-      './utils.web.js'
+      /prismarine-viewer[/|\\]viewer[/|\\]lib[/|\\]utils/
+      , './utils.web.js'
     ),
     new WorkboxPlugin.GenerateSW({
       // these options encourage the ServiceWorkers to get in there fast
@@ -77,7 +77,7 @@ const config = {
         { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/textures/'), to: './textures/' },
         { from: path.join(__dirname, '/node_modules/prismarine-viewer/public/worker.js'), to: './' },
         { from: path.join(__dirname, 'assets/'), to: './' },
-        { from: path.join(__dirname, 'extra-textures/'), to: './extra-textures/' },
+        { from: path.join(__dirname, 'extras-textures/'), to: './extras-textures/' },
         { from: path.join(__dirname, 'config.json'), to: './config.json' }
       ]
     })
