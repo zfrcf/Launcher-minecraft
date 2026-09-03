@@ -34,7 +34,8 @@ if (process.argv[3] === 'dev') {
   app.use(express.static(path.join(__dirname, './public')))
 }
 
-// Start the server
-const server = app.listen(process.argv[2] === undefined ? 8080 : process.argv[2], function () {
+// Start the server using PORT env (Railway) or CLI arg or fallback 8080
+const port = process.env.PORT || process.argv[2] || 8080
+const server = app.listen(port, '0.0.0.0', function () {
   console.log('Server listening on port ' + server.address().port)
 })
