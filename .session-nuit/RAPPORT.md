@@ -246,6 +246,12 @@ Le détail est dans `DECISIONS.md`, et le déroulé complet dans `JOURNAL.md`.
 **Rien de bloquant.** Le travail est commité et poussé sur la branche
 `claude/repo-cleanup-extract-zip-9cei1x`. Aucune pull request n'a été créée.
 
+**Si l'écran reste noir, une question à trancher en trente secondes :** sur la page de
+diagnostic, le bouton « Essayer une partie solo » ouvre un monde local, sans réseau, sans relais et
+sans compte. S'il s'affiche et que DonutSMP reste noir, ton appareil est hors de cause et le
+problème est côté serveur, relais ou compte. S'il ne s'affiche pas non plus, c'est ton appareil ou
+ton navigateur.
+
 **La seule chose que je te demande de faire :** ouvre
 <https://minecraft-donutsmp.vercel.app> et essaie d'entrer sur DonutSMP. Si le monde s'affiche,
 c'était bien la version qui bloquait. Si l'écran reste vide, va sur

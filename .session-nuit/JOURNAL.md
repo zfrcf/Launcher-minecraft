@@ -134,3 +134,15 @@
 - Parcours complet sur téléphone (Pixel 7) contre un vrai serveur : en jeu, monde affiché, profil
   mobile (distance 2), boutons tactiles, aucun bandeau. → OK
 - Suites complètes : `minecraft-web` npm test OK, profils d'appareil OK, `test.js` 28 contrôles.
+
+## 11 h 30 – 12 h 10 — Séparer l'appareil du serveur
+
+- La page de diagnostic testait le relais, le serveur, la carte graphique… mais ne permettait pas
+  de répondre à la question la plus simple : « est-ce mon appareil ou le serveur ? »
+- Ajout d'un bouton « Essayer une partie solo » : un monde local, sans réseau, sans relais et sans
+  compte. Si le solo s'affiche et pas DonutSMP, l'appareil est hors de cause.
+- Vérifié en cliquant réellement sur le bouton depuis la page : monde généré affiché, aucun
+  indicateur de chargement bloqué, aucun bandeau. → OK
+- Rapport remis dans l'ordre de lecture : la panne principale passe en tête, les ajouts de fin de
+  matinée rejoignent les sections auxquelles ils appartiennent.
+- `test.js` : 29 contrôles.
