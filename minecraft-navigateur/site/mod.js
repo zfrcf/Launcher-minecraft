@@ -118,20 +118,25 @@
       var clean = read('changedSettings') || {};
       KEYS.forEach(function (k) { delete clean[k]; });
       write('changedSettings', clean);
-      // L'entrée DonutSMP écrite par le mod doit partir aussi : si la panne vient du choix de
-      // version imposé, la garder ferait conclure à tort que le mod n'y est pour rien.
+      // Le mode sans risque retire les RÉGLAGES du mod (ceux qui pourraient gêner l'affichage),
+      // mais garde ce qui rend la connexion possible : la version et le compte Microsoft.
+      //
+      // Il effaçait les deux, au départ. Mesuré : sans version imposée, le client négocie avec le
+      // serveur et retient la plus récente qu'il sait parler. Contre un serveur récent, il retient
+      // 1.21.11 — qu'il ne sait pas afficher. Le mode « sans risque » provoquait donc lui-même
+      // l'écran vide qu'il sert à écarter. Il force maintenant une version affichable.
       var l = read('serversList');
       if (Array.isArray(l)) {
         for (var j = 0; j < l.length; j++) {
           if (l[j] && String(l[j].ip).indexOf('donutsmp.net') === 0) {
-            delete l[j].versionOverride;
-            delete l[j].authenticatedAccountOverride;
+            l[j].versionOverride = VERSION_CLIENT;
+            l[j].authenticatedAccountOverride = true;
           }
         }
         write('serversList', l);
       }
       localStorage.removeItem(MARK);
-      console.info(TAG, 'mode sans risque : réglages du mod retirés (y compris la version imposée), plein écran et FPS adaptatif désactivés');
+      console.info(TAG, 'mode sans risque : réglages de performance retirés, plein écran et FPS adaptatif désactivés ; connexion maintenue en ' + VERSION_CLIENT);
     } catch (e) {}
     return;
   }

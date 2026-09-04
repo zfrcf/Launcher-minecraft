@@ -28,6 +28,14 @@ verifie('mod.js est du JavaScript valide', (() => {
 verifie("mod.js ne contient pas </script> (il est injecté dans une balise script)", !mod.includes('</script>'));
 verifie('mod.js protège chaque accès au stockage', mod.includes('stockageUtilisable'));
 
+// Le mode sans risque ne doit pas effacer la version imposée : sans elle, le client négocie avec
+// le serveur et retient une version qu'il ne sait pas afficher. Mesuré : le mode « sans risque »
+// provoquait alors lui-même l'écran vide qu'il sert à écarter.
+verifie('le mode sans risque garde une version affichable',
+  /safe=1[\s\S]{0,2000}versionOverride = VERSION_CLIENT/.test(mod));
+verifie('le mode sans risque n’efface plus la version imposée',
+  !/delete l\[j\]\.versionOverride/.test(mod));
+
 // La version imposée est le réglage le plus dangereux du mod : une version que le client sait
 // négocier mais pas afficher donne une connexion réussie et un écran vide pour toujours. Ces trois
 // contrôles empêchent que cela revienne par inadvertance.
