@@ -253,6 +253,7 @@
             }
           } else { goodStreak = 0; }
         }
+        surveillerCoupure();
         if (el) el.textContent = fps + ' FPS · rendu ' + (opts.renderDistance) + ' · ' + tier;
       }
       requestAnimationFrame(tick);
@@ -272,7 +273,8 @@
     if (/proxy server|Connection setup error|most likely is down/i.test(m)) return ['Le relais public ne répond pas.', 'Le navigateur passe par un relais (proxy.mcraft.fun) pour joindre DonutSMP. Il est en panne, saturé ou bloqué par ton réseau. Réessaie dans quelques minutes, ou héberge ton propre relais (dossier minecraft-navigateur, gratuit sur Render).'];
     if (/encryption|auth|Microsoft|login|account|profile/i.test(m)) return ['Problème de compte Microsoft.', 'DonutSMP exige un compte Microsoft avec Minecraft. Reconnecte-toi (bouton compte dans la liste des serveurs), puis relance. Si tu as plusieurs comptes, vérifie que c’est le bon.'];
     if (/outdated|version|unsupported|protocol/i.test(m)) return ['Version refusée par le serveur.', 'Le client se connecte en 1.21.11. Dans la liste des serveurs, modifie l’entrée DonutSMP et choisis une autre version acceptée par le serveur.'];
-    if (/timed? ?out|ECONNREFUSED|ENOTFOUND|Failed to connect|Disconnected|closed/i.test(m)) return ['Connexion au serveur interrompue.', 'DonutSMP est très chargé : file d’attente, anticheat qui coupe les connexions via relais, ou serveur en maintenance. Réessaie, puis lance le diagnostic si ça persiste.'];
+    if (/ProtocolError|Failed to load|socket|WebSocket|ECONNRESET/i.test(m)) return ['La connexion a été coupée en cours de partie.', 'Le lien avec le relais s’est interrompu : relais tombé, wifi ou 4G qui a lâché, ou mise en veille du téléphone. Reconnecte-toi ; si ça se répète, teste ton relais dans le diagnostic.'];
+    if (/timed? ?out|ECONNREFUSED|ENOTFOUND|Failed to connect|Disconnected|closed|kick/i.test(m)) return ['Connexion au serveur interrompue.', 'DonutSMP est très chargé : file d’attente, anticheat qui coupe les connexions via relais, ou serveur en maintenance. Réessaie, puis lance le diagnostic si ça persiste.'];
     return ['Le jeu a rencontré une erreur.', m.slice(0, 200)];
   }
   function showHelp(title, detail, soft) {
@@ -292,14 +294,37 @@
     helpEl.appendChild(x); helpEl.appendChild(b); helpEl.appendChild(p); helpEl.appendChild(row);
     document.body.appendChild(helpEl);
   }
+  function ressembleAUneErreur(m) {
+    return /error|failed|exception|refused|timed? ?out|disconnect|kick|ECONN|ENOTFOUND/i.test(String(m || ''));
+  }
   function inGameNow() { return !!(window.miscUiState && window.miscUiState.gameLoaded); }
   var loadTimer = null;
+
+  // Coupure en cours de partie (relais qui tombe, wifi perdu, téléphone mis en veille).
+  // Le client ne passe pas par l'écran de statut dans ce cas : il émet une fin de connexion sur son
+  // objet de jeu, avec une raison. Constaté en test réel contre un serveur Minecraft : « socketClosed ».
+  // Une déconnexion volontaire n'a pas cette raison : on ne dit donc rien dans ce cas.
+  var botSurveille = null;
+  function surveillerCoupure() {
+    var bot = window.bot;
+    if (!bot || bot === botSurveille || typeof bot.on !== 'function') return;
+    botSurveille = bot;
+    try {
+      bot.on('end', function (raison) {
+        var r = String(raison || '');
+        if (!/socket|ECONN|closed|timeout|network/i.test(r)) return;   // départ volontaire : rien à signaler
+        console.warn(TAG, 'connexion terminée :', r);
+        showHelp('La connexion a été coupée en cours de partie.',
+          'Le lien avec le relais s’est interrompu : relais tombé, wifi ou 4G qui a lâché, ou téléphone mis en veille. Reconnecte-toi ; si ça se répète, teste ton relais dans le diagnostic.', false);
+      });
+    } catch (e) {}
+  }
   function hookStatus() {
     var orig = globalThis.setLoadingScreenStatus;
     if (typeof orig !== 'function' || orig.__mod) return false;
     var wrapped = function (status, isError) {
       try {
-        if (isError && typeof status === 'string' && status) {
+        if (typeof status === 'string' && status && (isError || ressembleAUneErreur(status))) {
           if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
           var ex = explain(status);
           console.warn(TAG, 'erreur du client :', status);

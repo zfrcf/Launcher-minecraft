@@ -48,17 +48,19 @@ const srv = http.createServer((req, res) => {
   await page.keyboard.press('Escape').catch(() => {});
   await page.waitForTimeout(1500);
 
-  // Récupère toutes les règles générées par Tailwind (il injecte une feuille de style)
+  // Récupère uniquement la feuille générée par Tailwind. On l'identifie à coup sûr par ses
+  // variables internes (--tw-…) : la page a aussi une balise <style> sans id, qu'il ne faut surtout
+  // pas recopier — elle contient notamment le bloc @media print, qui s'appliquerait alors à l'écran.
   const css = await page.evaluate(() => {
-    let out = [];
     for (const sheet of document.styleSheets) {
       let rules; try { rules = sheet.cssRules; } catch (e) { continue; }
-      // On ne garde que la feuille générée par Tailwind (sans href, injectée par le script)
-      if (sheet.ownerNode && sheet.ownerNode.tagName === 'STYLE' && !sheet.ownerNode.id) {
-        for (const r of rules) out.push(r.cssText);
-      }
+      const noeud = sheet.ownerNode;
+      if (!noeud || noeud.tagName !== 'STYLE' || noeud.id) continue;
+      const texte = noeud.textContent || '';
+      if (!texte.includes('--tw-')) continue;          // ce n'est pas la feuille de Tailwind
+      return [...rules].map((r) => r.cssText).join('\n');
     }
-    return out.join('\n');
+    throw new Error('feuille Tailwind introuvable : le CDN a-t-il bien répondu ?');
   });
   fs.writeFileSync(__dirname + '/tailwind-genere.css', css);
   console.log('CSS capturé :', Math.round(css.length / 1024), 'Ko,', css.split('\n').length, 'règles');

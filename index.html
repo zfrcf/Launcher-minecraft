@@ -18,45 +18,6 @@
          générée par Tailwind pour cette page ; elle reste inactive (media="not all") et n'est
          activée que si le CDN a échoué. Regénération : voir README, section « styles de repli ». -->
     <style id="repliTailwind" media="not all">
-.card-actions { display: none; position: absolute; top: 2px; right: 2px; gap: 2px; }
-.action-btn { background: rgba(255, 255, 255, 0.9); border-radius: 4px; width: 20px; height: 20px; text-align: center; line-height: 20px; font-size: 11px; transition: background 0.2s; }
-.btn-del:hover { background: rgb(254, 226, 226); color: rgb(220, 38, 38); }
-.btn-copy:hover { background: rgb(219, 234, 254); color: rgb(37, 99, 235); }
-.matrix-grid { display: grid; grid-template-columns: 150px repeat(7, 1fr); }
-.gantt-grid-precise { display: grid; grid-template-columns: 150px repeat(72, 1fr); }
-.day-column.drag-over { z-index: 10; background-color: rgb(55, 65, 81) !important; border: 2px dashed var(--fp-yellow) !important; }
-.brand-logo { font-style: italic; text-transform: uppercase; letter-spacing: -1px; }
-.brand-underline { border-bottom: 3px solid var(--fp-yellow); display: inline-block; line-height: 0.8; padding-bottom: 2px; }
-::-webkit-scrollbar { width: 8px; height: 8px; }
-::-webkit-scrollbar-track { background: rgb(17, 24, 39); }
-::-webkit-scrollbar-thumb { background: rgb(55, 65, 81); border-radius: 4px; }
-::-webkit-scrollbar-thumb:hover { background: rgb(250, 204, 21); }
-@keyframes fadein { 
-  0% { bottom: 0px; opacity: 0; }
-  100% { bottom: 30px; opacity: 1; }
-}
-@keyframes fadeout { 
-  0% { bottom: 30px; opacity: 1; }
-  100% { bottom: 0px; opacity: 0; }
-}
-.club-badge { font-size: 8px; font-weight: bold; background: rgba(0, 0, 0, 0.1); padding: 2px 4px; border-radius: 2px; text-transform: uppercase; margin-bottom: 2px; display: inline-block; }
-  @page { size: landscape; margin: 5mm; }
-  body { background: white; color: black; print-color-adjust: exact; zoom: 70%; }
-  #mainContainer { width: 100% !important; height: auto !important; overflow: visible !important; display: block !important; padding: 0px !important; }
-  .bg-gray-900, .bg-gray-800, .bg-black { background-color: white !important; color: black !important; border-color: rgb(204, 204, 204) !important; }
-  .text-yellow-400, .text-yellow-500 { color: black !important; font-weight: bold; }
-  .text-gray-300, .text-gray-400, .text-gray-500, .text-white { color: black !important; }
-  .matrix-grid, .gantt-grid-precise { border: 1px solid rgb(0, 0, 0) !important; }
-  .border-b, .border-r { border-color: rgb(204, 204, 204) !important; }
-  #signatureSection { break-before: page; padding-top: 20px; display: block !important; width: 100% !important; }
-  .sig-table { width: 100%; border-collapse: collapse; margin-top: 20px; font-size: 14px; }
-  .sig-table th, .sig-table td { border: 1px solid rgb(0, 0, 0); padding: 10px; text-align: left; }
-  .sig-box { height: 40px; }
-  .print-footer { display: flex; justify-content: space-between; margin-top: 40px; gap: 40px; }
-  .company-box { width: 40%; border: 2px solid rgb(0, 0, 0); padding: 15px; font-size: 14px; }
-  .visa-container { width: 60%; display: flex; gap: 20px; }
-  .visa-box { flex: 1 1 0%; border: 1px solid rgb(0, 0, 0); height: 100px; padding: 10px; font-size: 12px; font-weight: bold; }
-}
 *, ::before, ::after { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ; --tw-contain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
 ::backdrop { --tw-border-spacing-x: 0; --tw-border-spacing-y: 0; --tw-translate-x: 0; --tw-translate-y: 0; --tw-rotate: 0; --tw-skew-x: 0; --tw-skew-y: 0; --tw-scale-x: 1; --tw-scale-y: 1; --tw-pan-x: ; --tw-pan-y: ; --tw-pinch-zoom: ; --tw-scroll-snap-strictness: proximity; --tw-gradient-from-position: ; --tw-gradient-via-position: ; --tw-gradient-to-position: ; --tw-ordinal: ; --tw-slashed-zero: ; --tw-numeric-figure: ; --tw-numeric-spacing: ; --tw-numeric-fraction: ; --tw-ring-inset: ; --tw-ring-offset-width: 0px; --tw-ring-offset-color: #fff; --tw-ring-color: rgb(59 130 246 / 0.5); --tw-ring-offset-shadow: 0 0 #0000; --tw-ring-shadow: 0 0 #0000; --tw-shadow: 0 0 #0000; --tw-shadow-colored: 0 0 #0000; --tw-blur: ; --tw-brightness: ; --tw-contrast: ; --tw-grayscale: ; --tw-hue-rotate: ; --tw-invert: ; --tw-saturate: ; --tw-sepia: ; --tw-drop-shadow: ; --tw-backdrop-blur: ; --tw-backdrop-brightness: ; --tw-backdrop-contrast: ; --tw-backdrop-grayscale: ; --tw-backdrop-hue-rotate: ; --tw-backdrop-invert: ; --tw-backdrop-opacity: ; --tw-backdrop-saturate: ; --tw-backdrop-sepia: ; --tw-contain-size: ; --tw-contain-layout: ; --tw-contain-paint: ; --tw-contain-style: ; }
 *, ::after, ::before { box-sizing: border-box; border-width: 0px; border-style: solid; border-color: rgb(229, 231, 235); }
@@ -315,16 +276,34 @@ img, video { max-width: 100%; height: auto; }
 }
     </style>
     <script>
-      // Tailwind définit window.tailwind quand il a chargé. On laisse un délai au réseau, puis on
-      // bascule sur la feuille de repli si rien n'est arrivé.
+      // Tailwind définit window.tailwind quand il a chargé. Tant qu'il n'est pas là, on bascule sur
+      // la feuille de repli ; s'il finit par arriver (réseau lent), on la remet en veille pour
+      // qu'une seule mise en forme s'applique. La surveillance s'arrête après 30 secondes.
       (function () {
-        function activerRepli() {
-          if (window.tailwind) return;
-          var s = document.getElementById('repliTailwind');
-          if (s && s.media !== 'all') { s.media = 'all'; console.warn('Tailwind indisponible : mise en forme de repli activée.'); }
+        function cssTailwindPose() {
+          for (var i = 0; i < document.styleSheets.length; i++) {
+            var n = document.styleSheets[i].ownerNode;
+            if (n && n.tagName === 'STYLE' && !n.id && (n.textContent || '').indexOf('--tw-') !== -1) return true;
+          }
+          return false;
         }
-        window.addEventListener('load', function () { setTimeout(activerRepli, 1200); });
-        setTimeout(activerRepli, 5000);
+        var debut = Date.now();
+        var timer = setInterval(function () {
+          var s = document.getElementById('repliTailwind');
+          if (!s) return clearInterval(timer);
+          // window.tailwind existe avant que la feuille ne soit posée : on attend le CSS lui-même,
+          // sinon on retire le repli pendant l'instant où plus aucune mise en forme ne s'applique.
+          if (window.tailwind && cssTailwindPose()) {
+            if (s.media === 'all') { s.media = 'not all'; console.info('Tailwind est arrivé : repli remis en veille.'); }
+            return clearInterval(timer);
+          }
+          // Laisse une seconde au réseau avant de basculer, pour ne pas clignoter au chargement.
+          if (Date.now() - debut > 1000 && s.media !== 'all') {
+            s.media = 'all';
+            console.warn('Tailwind indisponible : mise en forme de repli activée.');
+          }
+          if (Date.now() - debut > 30000) clearInterval(timer);
+        }, 300);
       })();
     </script>
     
@@ -681,7 +660,7 @@ img, video { max-width: 100%; height: auto; }
             activeEmps.forEach(emp => {
                 const row = document.createElement('div');
                 row.className = "matrix-grid border-b border-gray-700 hover:bg-[#1f2937] transition";
-                row.innerHTML = `<div class="p-2 border-r border-gray-800 flex flex-col justify-center bg-gray-900/50"><span class="text-xs font-bold text-gray-300 uppercase">${emp.name}</span><span class="text-[9px] text-gray-500">${emp.role}</span></div>`;
+                row.innerHTML = `<div class="p-2 border-r border-gray-800 flex flex-col justify-center bg-gray-900/50"><span class="text-xs font-bold text-gray-300 uppercase">${esc(emp.name)}</span><span class="text-[9px] text-gray-500">${esc(emp.role)}</span></div>`;
                 
                 for(let d=0; d<7; d++) {
                     const cell = document.createElement('div');
@@ -728,7 +707,7 @@ img, video { max-width: 100%; height: auto; }
             activeEmps.forEach(e => {
                 const rowLine = document.createElement('div');
                 rowLine.className = 'col-span-full grid grid-cols-[150px_repeat(72,1fr)] gap-px border-b border-gray-700 hover:bg-gray-800 transition relative h-12 items-center';
-                rowLine.innerHTML = `<div class="pl-4 text-xs font-bold text-gray-400 uppercase truncate border-r border-gray-800 h-full flex items-center bg-gray-900/50">${e.name}</div>`;
+                rowLine.innerHTML = `<div class="pl-4 text-xs font-bold text-gray-400 uppercase truncate border-r border-gray-800 h-full flex items-center bg-gray-900/50">${esc(e.name)}</div>`;
                 
                 dayShifts.filter(s => s.eId === e.id).forEach(s => {
                     const isAbsent = s.status && s.status !== 'present';
@@ -792,7 +771,7 @@ img, video { max-width: 100%; height: auto; }
                 const pct = Math.min((total/e.max)*100, 100);
                 let col = total < e.max ? 'bg-blue-500' : (total === e.max ? 'bg-green-500' : 'bg-red-500');
                 let txtCol = total < e.max ? 'text-blue-400' : (total === e.max ? 'text-green-400' : 'text-red-400');
-                div.innerHTML += `<div class="bg-gray-800 border border-gray-700 p-2 rounded mb-2 group hover:border-gray-500 transition"><div class="flex justify-between items-center mb-1"><div><div class="font-bold text-gray-300 uppercase text-[10px]">${e.name}</div><div class="text-[8px] text-gray-500">${e.role}</div></div><div class="font-mono ${txtCol} font-bold text-[10px]">${parseFloat(total.toFixed(2))}/${e.max}</div></div><div class="h-1 bg-gray-700 w-full rounded-full overflow-hidden"><div class="${col} h-full transition-all duration-500" style="width:${pct}%"></div></div></div>`;
+                div.innerHTML += `<div class="bg-gray-800 border border-gray-700 p-2 rounded mb-2 group hover:border-gray-500 transition"><div class="flex justify-between items-center mb-1"><div><div class="font-bold text-gray-300 uppercase text-[10px]">${esc(e.name)}</div><div class="text-[8px] text-gray-500">${esc(e.role)}</div></div><div class="font-mono ${txtCol} font-bold text-[10px]">${parseFloat(total.toFixed(2))}/${e.max}</div></div><div class="h-1 bg-gray-700 w-full rounded-full overflow-hidden"><div class="${col} h-full transition-all duration-500" style="width:${pct}%"></div></div></div>`;
             });
         }
 
@@ -801,7 +780,7 @@ img, video { max-width: 100%; height: auto; }
             const wId = getWId(currentWeekOffset); const activeShifts = getFilteredShifts();
             getFilteredEmployees().forEach(e => {
                 const total = activeShifts.filter(s => s.wId === wId && s.eId === e.id && (!s.status || s.status === 'present')).reduce((a,b)=>a+b.dur,0);
-                if(total > 0 || currentClubView === 'all') { tb.innerHTML += `<tr><td class="font-bold">${e.name}</td><td>${e.role}</td><td>${parseFloat(total.toFixed(2))}h / ${e.max}h</td><td class="sig-box"></td></tr>`; }
+                if(total > 0 || currentClubView === 'all') { tb.innerHTML += `<tr><td class="font-bold">${esc(e.name)}</td><td>${esc(e.role)}</td><td>${parseFloat(total.toFixed(2))}h / ${e.max}h</td><td class="sig-box"></td></tr>`; }
             });
         }
 
@@ -813,7 +792,7 @@ img, video { max-width: 100%; height: auto; }
             
             let tableHTML = `<html xmlns:o="urn:schemas-microsoft-com:office:office" xmlns:x="urn:schemas-microsoft-com:office:excel" xmlns="http://www.w3.org/TR/REC-html40"><head><meta charset="UTF-8"></head><body><h2 style="text-align:center">PAYE - ${clubN}</h2><table border="1" style="border-collapse:collapse; width:100%"><tr style="background-color:#eee"><th>Employé</th><th>Contrat</th><th>Lun</th><th>Mar</th><th>Mer</th><th>Jeu</th><th>Ven</th><th>Sam</th><th>Dim</th><th>TOTAL TRAVAILLÉ</th></tr>`;
             activeEmps.forEach(emp => {
-                let row = `<tr><td>${emp.name}</td><td>${emp.max}h</td>`; let totalWeek = 0;
+                let row = `<tr><td>${esc(emp.name)}</td><td>${emp.max}h</td>`; let totalWeek = 0;
                 for(let i=0; i<7; i++) {
                     const dayShifts = activeShifts.filter(s => s.wId === wId && s.eId === emp.id && parseInt(s.dIdx) === i); let cellContent = "";
                     dayShifts.forEach(s => { if(s.status && s.status !== 'present') cellContent += getStatusLabel(s.status) + " "; else { totalWeek += s.dur; cellContent += parseFloat(s.dur.toFixed(2)).toString().replace('.',',') + " "; } });
@@ -841,6 +820,7 @@ img, video { max-width: 100%; height: auto; }
             const sDec = timeToDecimal(startStr); const eDec = timeToDecimal(endStr); const pDec = pause / 60;
             if(sDec >= eDec) { alert("L'heure de fin doit être après l'heure de début."); return; }
             const dur = eDec - sDec - pDec;
+            if(dur <= 0) { alert("La pause est aussi longue que le shift : il ne resterait aucune heure travaillée."); return; }
 
             if(editId) { const idx = shifts.findIndex(x => x.id == editId); if(idx !== -1) shifts[idx] = { ...shifts[idx], eId, dIdx, startStr, endStr, pause, dur, status, comment, clubId }; } 
             else { shifts.push({ id: Date.now(), wId: getWId(currentWeekOffset), eId, dIdx, startStr, endStr, pause, dur, status, comment, clubId }); }
@@ -856,14 +836,16 @@ img, video { max-width: 100%; height: auto; }
         function copyShift(id, e) { e.stopPropagation(); const s = shifts.find(x => x.id === id); if(s) { clipboard = { ...s }; document.getElementById('btnPaste').classList.remove('hidden'); document.getElementById('btnPaste').classList.add('flex'); showToast("Copié dans le presse-papier !"); } }
         function pasteShift() { if(!clipboard) return; openModal('shiftModal'); document.getElementById('shiftEmpSelect').value = clipboard.eId; document.getElementById('shiftStart').value = clipboard.startStr; document.getElementById('shiftEnd').value = clipboard.endStr; document.getElementById('shiftPause').value = clipboard.pause; document.getElementById('shiftComment').value = clipboard.comment || ''; document.getElementById('shiftClubSelect').value = clipboard.clubId || 'begles'; calcPreview(); if(viewMode === 'day') document.getElementById('shiftDaySelect').value = currentDayIndex; }
         
-        function saveEmployee() { const name = document.getElementById('newEmpName').value; const role = document.getElementById('newEmpRole').value; const max = parseInt(document.getElementById('newEmpHours').value); const clubId = document.getElementById('newEmpClub').value; if(!name.trim()) { alert("Indique le nom du collaborateur."); return; } if(!max) { alert("Indique le nombre d'heures du contrat (ex : 35)."); return; } if(editingEmpId) { const idx = employees.findIndex(e => e.id == editingEmpId); if(idx !== -1) { employees[idx].name = name.toUpperCase(); employees[idx].role = role; employees[idx].max = max; employees[idx].clubId = clubId; } } else { employees.push({ id: Date.now(), name: name.toUpperCase(), role: role || 'Staff', max, clubId: clubId, color: colorPalette[employees.length % colorPalette.length] }); } resetEmpForm(); save(); updateView(); renderModalList(); }
+        function saveEmployee() { const name = document.getElementById('newEmpName').value; const role = document.getElementById('newEmpRole').value; const max = parseInt(document.getElementById('newEmpHours').value); const clubId = document.getElementById('newEmpClub').value; const nom = name.trim(); if(!nom) { alert("Indique le nom du collaborateur."); return; } if(!max || max <= 0) { alert("Indique le nombre d'heures du contrat (ex : 35)."); return; } if(editingEmpId) { const idx = employees.findIndex(e => e.id == editingEmpId); if(idx !== -1) { employees[idx].name = nom.toUpperCase(); employees[idx].role = role; employees[idx].max = max; employees[idx].clubId = clubId; } } else { employees.push({ id: Date.now(), name: nom.toUpperCase(), role: role || 'Staff', max, clubId: clubId, color: colorPalette[employees.length % colorPalette.length] }); } resetEmpForm(); save(); updateView(); renderModalList(); }
         function prepareEditEmp(id) { const emp = employees.find(e => e.id === id); if(emp) { document.getElementById('newEmpName').value = emp.name; document.getElementById('newEmpRole').value = emp.role; document.getElementById('newEmpHours').value = emp.max; document.getElementById('newEmpClub').value = emp.clubId || 'all'; document.getElementById('editEmpId').value = emp.id; editingEmpId = emp.id; const btn = document.getElementById('btnSaveEmp'); btn.innerText = "MODIFIER"; btn.classList.remove('bg-green-600','hover:bg-green-500'); btn.classList.add('bg-orange-600','hover:bg-orange-500'); } }
         function resetEmpForm() { document.getElementById('newEmpName').value = ''; document.getElementById('newEmpRole').value = ''; document.getElementById('newEmpHours').value = ''; document.getElementById('newEmpClub').value = 'all'; document.getElementById('editEmpId').value = ''; editingEmpId = null; const btn = document.getElementById('btnSaveEmp'); btn.innerText = "AJOUTER"; btn.classList.add('bg-green-600','hover:bg-green-500'); btn.classList.remove('bg-orange-600','hover:bg-orange-500'); }
         function moveEmp(index, direction) { if (direction === -1 && index > 0) { [employees[index], employees[index - 1]] = [employees[index - 1], employees[index]]; } else if (direction === 1 && index < employees.length - 1) { [employees[index], employees[index + 1]] = [employees[index + 1], employees[index]]; } save(); updateView(); renderModalList(); }
         function delEmp(id) { if(confirm('Supprimer cet employé ?')) { employees = employees.filter(e => e.id !== id); shifts = shifts.filter(s => s.eId !== id); save(); updateView(); renderModalList(); } }
-        function renderModalList() { const container = document.getElementById('modalEmployeeList'); container.innerHTML = ''; employees.forEach((e, i) => { const clubBadge = e.clubId && e.clubId !== 'all' ? `<span class="text-[8px] bg-blue-900 text-blue-200 px-1 rounded ml-1 uppercase">${clubsName[e.clubId].substring(0,3)}</span>` : `<span class="text-[8px] bg-gray-700 text-gray-300 px-1 rounded ml-1 uppercase">MULTI</span>`; container.innerHTML += `<div class="emp-row flex justify-between items-center border-b border-gray-700 p-2 text-xs text-gray-300"><div class="w-1/3 truncate font-bold">${e.name} ${clubBadge}</div><div class="w-1/4 truncate">${e.role}</div><div class="w-1/6 text-center">${e.max}h</div><div class="w-1/4 flex justify-end gap-1"><span onclick="moveEmp(${i}, -1)" class="action-icon text-gray-400 hover:text-white">⬆️</span><span onclick="moveEmp(${i}, 1)" class="action-icon text-gray-400 hover:text-white">⬇️</span><span onclick="prepareEditEmp(${e.id})" class="action-icon text-blue-400 hover:text-blue-300">✏️</span><span onclick="delEmp(${e.id})" class="action-icon text-red-500 hover:text-red-400">🗑️</span></div></div>`; }); }
+        function renderModalList() { const container = document.getElementById('modalEmployeeList'); container.innerHTML = ''; employees.forEach((e, i) => { const clubBadge = e.clubId && e.clubId !== 'all' ? `<span class="text-[8px] bg-blue-900 text-blue-200 px-1 rounded ml-1 uppercase">${clubsName[e.clubId].substring(0,3)}</span>` : `<span class="text-[8px] bg-gray-700 text-gray-300 px-1 rounded ml-1 uppercase">MULTI</span>`; container.innerHTML += `<div class="emp-row flex justify-between items-center border-b border-gray-700 p-2 text-xs text-gray-300"><div class="w-1/3 truncate font-bold">${esc(e.name)} ${clubBadge}</div><div class="w-1/4 truncate">${esc(e.role)}</div><div class="w-1/6 text-center">${e.max}h</div><div class="w-1/4 flex justify-end gap-1"><span onclick="moveEmp(${i}, -1)" class="action-icon text-gray-400 hover:text-white">⬆️</span><span onclick="moveEmp(${i}, 1)" class="action-icon text-gray-400 hover:text-white">⬇️</span><span onclick="prepareEditEmp(${e.id})" class="action-icon text-blue-400 hover:text-blue-300">✏️</span><span onclick="delEmp(${e.id})" class="action-icon text-red-500 hover:text-red-400">🗑️</span></div></div>`; }); }
 
         function save() { localStorage.setItem('fpAppShiftsV19', JSON.stringify(shifts)); localStorage.setItem('fpAppEmpsV10', JSON.stringify(employees)); }
+        // Rend sûre l'insertion d'un texte saisi dans du HTML (noms, rôles, commentaires).
+        function esc(v) { return String(v == null ? '' : v).replace(/[&<>"']/g, function (c) { return { '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#39;' }[c]; }); }
         function delShift(id, e) { if(e) e.stopPropagation(); if(confirm('Supprimer ce shift ?')) { shifts = shifts.filter(s => s.id !== id); save(); updateView(); } }
         function getMonday(off) { const d = new Date(); const day = d.getDay(), diff = d.getDate() - day + (day == 0 ? -6 : 1) + (off * 7); return new Date(d.setDate(diff)); }
         function getWId(off) { const d = getMonday(off); return `${d.getFullYear()}-W${Math.ceil((((d - new Date(d.getFullYear(),0,1)) / 86400000) + 1)/7)}`; }
@@ -885,7 +867,7 @@ img, video { max-width: 100%; height: auto; }
                 const s = document.getElementById('shiftEmpSelect'); s.innerHTML=''; 
                 const activeEmps = getFilteredEmployees();
                 if(activeEmps.length===0) document.getElementById('noEmployeeWarning').classList.remove('hidden'); 
-                else { document.getElementById('noEmployeeWarning').classList.add('hidden'); activeEmps.forEach(e => s.innerHTML+=`<option value="${e.id}">${e.name}</option>`); if(viewMode==='day') document.getElementById('shiftDaySelect').value = currentDayIndex; } calcPreview();
+                else { document.getElementById('noEmployeeWarning').classList.add('hidden'); activeEmps.forEach(e => s.innerHTML+=`<option value="${e.id}">${esc(e.name)}</option>`); if(viewMode==='day') document.getElementById('shiftDaySelect').value = currentDayIndex; } calcPreview();
             }
             if(id==='employeeModal') renderModalList();
             if(id==='configModal') { document.getElementById('confName').value = company.name; document.getElementById('confAddress').value = company.address; document.getElementById('confSiret').value = company.siret; }
