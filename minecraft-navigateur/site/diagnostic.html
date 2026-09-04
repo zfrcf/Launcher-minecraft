@@ -22,6 +22,11 @@
   a.btn.sec, button.btn.sec { background: #374151; }
   pre { background: #1b1f27; padding: 12px; border-radius: 8px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
   h2 { font-size: 17px; margin: 26px 0 8px; }
+  .relais { background: #1b1f27; border-radius: 10px; padding: 14px 16px; margin-top: 8px; }
+  .relais input { width: 100%; box-sizing: border-box; background: #0f1115; border: 1px solid #33384a; color: #e6e6e6; font: inherit; padding: 9px 10px; border-radius: 8px; margin: 8px 0 10px; }
+  .relais .etat { font-size: 14px; margin-top: 10px; min-height: 20px; }
+  .relais .etat.ok { color: #4ade80; } .relais .etat.ko { color: #f87171; } .relais .etat.attente { color: #9aa3b2; }
+  .actuel { color: #9aa3b2; font-size: 14px; }
 </style>
 </head>
 <body>
@@ -36,6 +41,22 @@
     <a class="btn sec" href="./?safe=1&modal=serversList">Mode sans risque (réglages du mod retirés)</a>
     <a class="btn sec" href="./?reset=1&modal=serversList">Réappliquer le mod</a>
     <button class="btn sec" id="copy">Copier le rapport</button>
+  </div>
+
+  <h2>Ton relais (contre la latence)</h2>
+  <div class="relais">
+    <p class="actuel">Le navigateur ne peut pas parler directement à un serveur Minecraft : tout passe
+    par un relais. Le relais public est partagé par tout le monde et hébergé loin : c'est une cause
+    fréquente de saccades. Un relais à toi, gratuit sur Render (voir <code>minecraft-navigateur/README.md</code>),
+    est réservé à ton usage.</p>
+    <div class="actuel" id="relaisActuel">Relais utilisé : …</div>
+    <input id="relaisUrl" placeholder="https://mon-relais-xxxx.onrender.com" autocomplete="off" spellcheck="false">
+    <div class="btns" style="margin:0">
+      <button class="btn" id="relaisTester">Tester ce relais</button>
+      <button class="btn sec" id="relaisUtiliser">Utiliser ce relais</button>
+      <button class="btn sec" id="relaisPublic">Revenir au relais public</button>
+    </div>
+    <div class="etat attente" id="relaisEtat"></div>
   </div>
 
   <h2>Rapport technique</h2>
@@ -138,6 +159,68 @@
   var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   set('fs', fsApi ? 'ok' : 'warn', fsApi ? 'API disponible : plein écran au premier clic.' : 'Pas d’API plein écran dans ce navigateur.',
     !fsApi && isIOS ? 'iPhone/iPad : Partager → Sur l’écran d’accueil, puis lance le jeu depuis l’icône.' : '');
+
+  // ---- Relais personnel : test de latence et mémorisation
+  // Le client lit d'abord le paramètre d'URL ?proxy=, puis proxiesData.selected dans le stockage
+  // local. On écrit donc proxiesData pour que le choix tienne d'un chargement à l'autre.
+  function ecrire(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); return true; } catch (e) { return false; } }
+  function relaisActuel() {
+    var p = read('proxiesData');
+    return (p && p.selected) || PROXY;
+  }
+  function majRelaisActuel() {
+    var a = relaisActuel();
+    document.getElementById('relaisActuel').textContent = 'Relais utilisé : ' + a + (a === PROXY ? ' (public, partagé)' : ' (le tien)');
+    var champ = document.getElementById('relaisUrl');
+    if (!champ.value && a !== PROXY) champ.value = a;
+  }
+  function etat(classe, texte) {
+    var e = document.getElementById('relaisEtat');
+    e.className = 'etat ' + classe; e.textContent = texte;
+  }
+  function normaliser(v) {
+    v = (v || '').trim().replace(/\/+$/, '');
+    if (!v) return '';
+    if (!/^https?:\/\//.test(v)) v = 'https://' + v;
+    return v;
+  }
+  function testerRelais(url) {
+    var t0 = performance.now();
+    return withTimeout(fetch(url + '/api/vm/net/connect', { cache: 'no-store' }), 12000).then(function (r) {
+      var ms = Math.round(performance.now() - t0);
+      if (!r.ok) throw new Error('réponse HTTP ' + r.status);
+      return ms;
+    });
+  }
+  document.getElementById('relaisTester').addEventListener('click', function () {
+    var url = normaliser(document.getElementById('relaisUrl').value);
+    if (!url) return etat('ko', 'Indique d’abord l’adresse de ton relais.');
+    etat('attente', 'Test en cours… (un relais Render endormi met 30 à 60 secondes à répondre)');
+    testerRelais(url).then(function (ms) {
+      etat('ok', 'Relais joignable en ' + ms + ' ms.' + (ms > 1500 ? ' C’est lent : il se réveillait peut-être. Refais le test.' : ' Tu peux l’utiliser.'));
+    }, function (e) {
+      etat('ko', 'Injoignable : ' + e.message + '. Vérifie l’adresse et que le service tourne sur Render.');
+    });
+  });
+  document.getElementById('relaisUtiliser').addEventListener('click', function () {
+    var url = normaliser(document.getElementById('relaisUrl').value);
+    if (!url) return etat('ko', 'Indique d’abord l’adresse de ton relais.');
+    var p = read('proxiesData') || { proxies: [], selected: '' };
+    if (!Array.isArray(p.proxies)) p.proxies = [];
+    if (p.proxies.indexOf(url) === -1) p.proxies.unshift(url);
+    p.selected = url;
+    if (!ecrire('proxiesData', p)) return etat('ko', 'Le navigateur refuse d’enregistrer ce choix.');
+    majRelaisActuel();
+    etat('ok', 'Relais enregistré. Il sera utilisé à la prochaine connexion.');
+  });
+  document.getElementById('relaisPublic').addEventListener('click', function () {
+    var p = read('proxiesData') || { proxies: [], selected: '' };
+    p.selected = PROXY;
+    if (!ecrire('proxiesData', p)) return etat('ko', 'Le navigateur refuse d’enregistrer ce choix.');
+    majRelaisActuel();
+    etat('ok', 'Retour au relais public.');
+  });
+  majRelaisActuel();
 
   function render() {
     var ko = tests.filter(function (t) { return results[t] && results[t].state === 'ko'; });

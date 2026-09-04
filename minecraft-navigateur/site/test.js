@@ -37,6 +37,9 @@ verifie('diagnostic.html teste les huit points annoncés',
 verifie('diagnostic.html propose le retour au jeu et le mode sans risque',
   diag.includes('./?modal=serversList') && diag.includes('safe=1'));
 
+verifie('diagnostic.html permet de tester et mémoriser un relais personnel',
+  ["id=\"relaisTester\"", "id=\"relaisUtiliser\"", "id=\"relaisPublic\"", "proxiesData"].every((t) => diag.includes(t)));
+
 const vercel = JSON.parse(fs.readFileSync(path.join(site, 'vercel.json'), 'utf8'));
 verifie('vercel.json réécrit /diagnostic vers la page',
   (vercel.rewrites || []).some((r) => r.source === '/diagnostic' && r.destination === '/diagnostic.html'));

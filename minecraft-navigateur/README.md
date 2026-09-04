@@ -45,6 +45,10 @@ de la page avant le client :
 - **Page `/diagnostic`** : teste en quelques secondes le relais public, le statut de DonutSMP, la
   carte graphique (WebGL 2), WebAssembly, l'appareil, l'état du mod et le plein écran, avec la
   solution pour chaque point en défaut. Bouton « Copier le rapport » pour le transmettre.
+- **Choix du relais depuis `/diagnostic`** : un champ permet de saisir l'adresse de ton relais
+  Render, de mesurer sa latence, puis de l'enregistrer comme relais par défaut (un bouton ramène
+  au relais public). C'est le principal levier restant contre les saccades, puisque le rendu est
+  déjà réglé au maximum.
 - **`?safe=1`** : retire tous les réglages du mod pour ce chargement (retour aux valeurs par défaut
   du client). Si DonutSMP charge en `?safe=1` et pas sans, le mod est en cause ; sinon le blocage
   vient du relais ou du serveur.
