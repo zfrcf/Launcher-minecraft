@@ -156,12 +156,17 @@ processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffr
   Linux et une relecture attentive, mais il n'a pas été exécuté. À surveiller au premier lancement.
 - **Les FPS réels.** La machine n'a pas de carte graphique : les mesures viennent d'un rendu
   logiciel, bien plus lent que ton matériel. Elles servent à comparer, pas à prédire.
+- **Que la version était bien la seule cause de ton blocage.** Je l'ai reproduit et corrigé sur un
+  serveur local, ce qui est solide. Mais DonutSMP peut avoir sa propre cause en plus. La page de
+  diagnostic est faite pour trancher en trente secondes.
 
 ## Une revue de code a trouvé un défaut grave dans mon propre travail
 
 En fin de session, j'ai fait relire tout le travail de la nuit par une revue indépendante, avec
 pour consigne de chercher les défauts plutôt que de valider. Elle a relevé 29 points. J'ai vérifié
-chacun avant de corriger, et l'un d'eux était sérieux.
+chacun avant de corriger, et l'un d'eux était sérieux. Le lendemain matin, en me méfiant de mes
+propres chiffres, j'ai trouvé le défaut le plus grave de tous : ma mesure de performance ne
+mesurait rien, et ce qu'elle cachait était la panne que tu m'avais signalée.
 
 **Le filet de sécurité de l'outil de planning était lui-même cassé.** En recopiant la mise en forme
 de repli, les règles d'impression étaient sorties de leur bloc. Résultat : le jour où le CDN
@@ -200,6 +205,8 @@ corriger à l'aveugle.
    fichiers depuis GitHub au moment du build.
 4. **Versionner ce compte rendu** dans le dépôt : le conteneur est éphémère, un fichier non commité
    aurait disparu.
+5. **Descendre la version de connexion de 1.21.11 à 1.21.8** sans te demander ton avis. C'est le
+   correctif le plus important de la nuit, et il est réversible : une constante dans `mod.js`.
 
 Le détail est dans `DECISIONS.md`, et le déroulé complet dans `JOURNAL.md`.
 
@@ -207,6 +214,13 @@ Le détail est dans `DECISIONS.md`, et le déroulé complet dans `JOURNAL.md`.
 
 **Rien de bloquant.** Le travail est commité et poussé sur la branche
 `claude/repo-cleanup-extract-zip-9cei1x`. Aucune pull request n'a été créée.
+
+**La seule chose que je te demande de faire :** ouvre
+<https://minecraft-donutsmp.vercel.app> et essaie d'entrer sur DonutSMP. Si le monde s'affiche,
+c'était bien la version qui bloquait. Si l'écran reste vide, va sur
+<https://minecraft-donutsmp.vercel.app/diagnostic> et envoie-moi le rapport : je n'ai pas de compte
+Microsoft ni de route réseau vers DonutSMP depuis cette machine, donc c'est le seul point que je ne
+peux pas vérifier moi-même.
 
 À décider quand tu auras cinq minutes :
 - **Supprimer les projets Vercel devenus inutiles** : `cubecraft-web-js1` à `cubecraft-web-js5`.
