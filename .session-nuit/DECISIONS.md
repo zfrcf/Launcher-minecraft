@@ -74,3 +74,23 @@ redéployer. Le site servi est, par construction, ce qui est commité.
 
 **Risque assumé.** Si GitHub est injoignable au moment du build, le build échoue. C'était déjà le
 cas : `mod.js` et `diagnostic.html` étaient déjà récupérés depuis le dépôt.
+
+## D9 — Le déploiement épingle un commit
+
+**Contexte.** Un déploiement a été annoncé « prêt » en 10 secondes sans rien reconstruire, et la
+page de diagnostic est restée sur sa version précédente. Cause : Vercel réutilise le résultat du
+build quand les fichiers envoyés sont identiques. Or, avec l'amorce (décision D8), l'amorce est le
+seul fichier envoyé et elle ne changeait jamais. Le déploiement paraissait réussi et ne déployait
+rien.
+
+**Choix.** L'amorce contient une constante `REVISION` mise à jour à chaque déploiement avec le
+commit visé. Elle sert de deux façons : les fichiers envoyés diffèrent donc le build a lieu, et le
+site déployé provient d'un commit précis au lieu de « l'état de la branche à cet instant ».
+`mod.js` et `diagnostic.html` sont récupérés depuis la même référence, pour ne pas assembler un
+site à partir de deux états du dépôt.
+
+**Aussi.** `Cache-Control: no-cache` sur la page de diagnostic. C'est la page qu'on corrige quand
+quelque chose ne va pas ; servie depuis le cache, une correction resterait invisible des heures.
+
+**Le vrai remède reste à ta main** : relier le dépôt à Vercel, pour que chaque `git push`
+reconstruise tout seul. C'est dans « Ce qui t'attend ».

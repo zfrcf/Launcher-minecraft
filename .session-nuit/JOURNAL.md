@@ -146,3 +146,16 @@
 - Rapport remis dans l'ordre de lecture : la panne principale passe en tête, les ajouts de fin de
   matinée rejoignent les sections auxquelles ils appartiennent.
 - `test.js` : 29 contrôles.
+
+## 12 h 10 – 12 h 40 — Un déploiement qui ne déployait rien
+
+- Après avoir ajouté l'essai en solo, la page en ligne ne changeait pas. Le déploiement était
+  pourtant « prêt », et le mod, lui, était bien à jour.
+- Deux causes, trouvées en regardant les en-têtes et la durée du build :
+  1. Vercel avait réutilisé le build précédent, les fichiers envoyés étant identiques au bit près.
+     Build en 10 secondes, rien de reconstruit. Le déploiement paraissait réussi.
+  2. La page de diagnostic était servie depuis le cache (`x-vercel-cache: HIT`, âge 600 s), sans
+     en-tête l'interdisant, contrairement à la page d'accueil.
+- Corrigé : l'amorce épingle le commit visé (le fichier change donc à chaque déploiement, et le
+  site déployé vient d'un commit précis), et la page de diagnostic passe en `no-cache`. Décision D9.
+- `test.js` : 30 contrôles.

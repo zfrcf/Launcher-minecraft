@@ -90,6 +90,11 @@ verifie('diagnostic.html permet de tester et mémoriser un relais personnel',
   ["id=\"relaisTester\"", "id=\"relaisUtiliser\"", "id=\"relaisPublic\"", "proxiesData"].every((t) => diag.includes(t)));
 
 const vercel = JSON.parse(fs.readFileSync(path.join(site, 'vercel.json'), 'utf8'));
+// La page de diagnostic est celle qu'on met à jour quand quelque chose ne va pas : servie depuis
+// le cache, une correction resterait invisible pendant des heures. Constaté pour de vrai.
+verifie('vercel.json interdit la mise en cache de la page de diagnostic',
+  /diagnostic\.html[\s\S]{0,120}no-cache/.test(JSON.stringify(vercel)));
+
 verifie('vercel.json réécrit /diagnostic vers la page',
   (vercel.rewrites || []).some((r) => r.source === '/diagnostic' && r.destination === '/diagnostic.html'));
 verifie('vercel.json envoie la racine vers la liste des serveurs',
