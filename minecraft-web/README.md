@@ -15,6 +15,11 @@ Jeu de blocs façon Minecraft, jouable dans un navigateur sur PC et mobile, avec
 - Cycle jour / nuit (20 min), nage, sprint, accroupi
 - Multijoueur : joueurs visibles, chat, blocs synchronisés, monde persistant
 - Commandes clavier/souris (AZERTY et QWERTY) et **tactiles** (joystick, regard au doigt, boutons)
+- **Plein écran partout** (accueil, menus, jeu) sur PC et mobile, dès le premier geste ; en plein
+  écran la touche Échap ouvre le menu du jeu au lieu de sortir (appui long pour sortir vraiment),
+  et l'écran se verrouille en paysage sur mobile. `?fullscreen=0` désactive.
+- **Qualité automatique à deux niveaux** : la résolution de rendu s'ajuste aux FPS, puis, une fois
+  au plancher, la distance de rendu descend d'un cran (jusqu'à 2) et remonte quand ça respire.
 - Sauvegarde du monde : navigateur (solo / hébergement) ou fichier `world.json` (serveur dédié)
 
 ## 4 façons de jouer

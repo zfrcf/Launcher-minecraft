@@ -25,7 +25,8 @@
     sun: null, ambient: null, selectionBox: null,
     keys: {},
     svc: null, dirty: new Set(), hit: null,
-    quality: 'auto', pixelRatio: 1, maxPixelRatio: 2, qualityCheckAt: 0
+    quality: 'auto', pixelRatio: 1, maxPixelRatio: 2, qualityCheckAt: 0,
+    distMin: 2, distMax: 5, lowStreak: 0, goodStreak: 0, distChangedAt: 0
   };
 
   // ---------- Web Worker : génération + maillage hors du thread principal ----------
@@ -222,6 +223,26 @@
     if (G.fps < 28) r = Math.max(0.5, r - 0.15);
     else if (G.fps > 56) r = Math.min(G.maxPixelRatio, r + 0.1);
     if (Math.abs(r - G.pixelRatio) > 0.01) { G.pixelRatio = r; G.renderer.setPixelRatio(r); }
+    adaptDistance(now, r);
+  }
+
+  // Second levier, quand la résolution est déjà au plancher : la distance de rendu. Elle est relue
+  // à chaque image par updateChunks et par le brouillard, donc modifiable à chaud. On descend après
+  // 3 mesures basses d'affilée et on remonte après 5 mesures confortables, avec 8 s entre deux
+  // changements : assez lent pour ne pas faire clignoter le paysage.
+  function adaptDistance(now, ratio) {
+    if (G.quality !== 'auto') return;
+    const floor = ratio <= 0.51;
+    if (G.fps < 25 && floor) { G.lowStreak++; G.goodStreak = 0; }
+    else if (G.fps > 52) { G.goodStreak++; G.lowStreak = 0; }
+    else { G.lowStreak = 0; G.goodStreak = 0; }
+    if (now - G.distChangedAt < 8000) return;
+    if (G.lowStreak >= 3 && G.renderDist > G.distMin) {
+      G.renderDist--; G.lowStreak = 0; G.distChangedAt = now;
+      UI.toast('Distance de rendu réduite à ' + G.renderDist + ' (image plus fluide)');
+    } else if (G.goodStreak >= 5 && G.renderDist < G.distMax) {
+      G.renderDist++; G.goodStreak = 0; G.distChangedAt = now;
+    }
   }
 
   function buildGeometry(g) {
@@ -540,7 +561,7 @@
         case 'KeyE': toggleInventory(); break;
         case 'KeyT': case 'Slash': if (!inMenu()) { e.preventDefault(); openChat(e.code === 'Slash' ? '/' : ''); } break;
         case 'F3': e.preventDefault(); UI.toggleDebug(); break;
-        case 'Escape': if (UI.isInventoryOpen()) closeInventory(); else if (UI.isPaused()) resume(); else if (G.touch) openPause(); break;
+        case 'Escape': if (UI.isInventoryOpen()) closeInventory(); else if (UI.isPaused()) resume(); else if (G.touch || G.pointerLocked) openPause(); break;
         default:
           if (e.code.startsWith('Digit')) { const n = parseInt(e.code.slice(5), 10); if (n >= 1 && n <= 9) { G.sel = n - 1; refreshHotbar(); refreshInventory(); } }
       }
@@ -589,7 +610,7 @@
     UI.showPause({ text: modeName + '\n' + players + ' joueur' + (players > 1 ? 's' : '') + ' en ligne · graine ' + G.world.seed, mode: G.player.mode, roomCode: G.net.mode === 'host' ? G.net.roomCode : '' });
     if (G.pointerLocked) { G.expectUnlock = true; document.exitPointerLock(); }
   }
-  function resume() { UI.hidePause(); requestLock(); }
+  function resume() { UI.hidePause(); if (MC.Fullscreen) MC.Fullscreen.enter(); requestLock(); }
   function toggleInventory() {
     if (UI.isPaused()) return;
     if (UI.isInventoryOpen()) closeInventory(); else openInventory();
@@ -708,8 +729,12 @@
 
   // ---------- Démarrage ----------
   async function play(opts) {
+    if (MC.Fullscreen) MC.Fullscreen.enter();
     G.creative = opts.gamemode === 'creative';
     G.renderDist = opts.dist;
+    G.distMax = opts.dist;
+    G.distMin = Math.min(2, opts.dist);
+    G.lowStreak = 0; G.goodStreak = 0; G.distChangedAt = 0;
     G.quality = opts.quality || 'auto';
     G.touch = MC.Touch.detect();
     const auth = MC.Auth;
@@ -739,6 +764,7 @@
       if (r.ok) G.config = await r.json();
     } catch (e) { G.config = {}; }
     G.atlas = MC.createAtlasCanvas();
+    if (MC.Fullscreen) MC.Fullscreen.init();
     UI.init(G.atlas, {
       play,
       login: async () => { try { await MC.Auth.login(); refreshAuth(); } catch (e) { UI.showStartError('Connexion Microsoft impossible : ' + (e.errorMessage || e.message)); } },
