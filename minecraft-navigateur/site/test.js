@@ -58,7 +58,11 @@ verifie('ce chien de garde lit l’indicateur d’affichage, pas les chunks reç
 verifie('mod.js explique l’écran de déconnexion du client',
   mod.includes('have been disconnected') && mod.includes('surveillerEcranDeconnexion'));
 verifie('mod.js surveille cet écran sans dépendre du régulateur de FPS',
-  /setInterval\(function \(\) \{\s*try \{ surveillerEcranDeconnexion/.test(mod));
+  /setInterval\(function \(\)[\s\S]{0,200}surveillerEcranDeconnexion/.test(mod));
+// innerText force un recalcul de mise en page à chaque lecture : un mod de performance ne peut pas
+// se le permettre en boucle. textContent sert de pré-filtre.
+verifie('la surveillance ne lit pas innerText à chaque tour',
+  mod.includes('function texteBrut') && mod.includes('document.body.textContent'));
 verifie('le bandeau d’aide porte un repère stable', mod.includes("setAttribute('data-mod-aide'"));
 
 verifie('mod.js expose les quatre options d’URL documentées',

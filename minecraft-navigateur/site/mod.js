@@ -294,7 +294,6 @@
         }
         if (inGame) dejaEnJeu = true;
         surveillerCoupure();
-        surveillerEcranDeconnexion();
         if (el) el.textContent = fps + ' FPS · rendu ' + (opts.renderDistance) + ' · ' + tier;
       }
       } catch (e) { if (!tick.__prevenu) { tick.__prevenu = true; console.warn(TAG, 'réglage automatique en difficulté :', e); } }
@@ -373,8 +372,15 @@
   // rien ne passait par hookStatus(), et le joueur restait devant un mur de texte incompréhensible.
   // Constaté en test réel contre un serveur exigeant un compte Microsoft.
   var ecranVu = false;
-  function surveillerEcranDeconnexion() {
+  // textContent ne force aucun recalcul de mise en page, contrairement à innerText. On s'en sert
+  // comme pré-filtre : innerText n'est lu que dans les rares instants où la page contient
+  // effectivement l'un des deux textes surveillés.
+  function texteBrut() {
+    try { return (document.body && document.body.textContent) || ''; } catch (e) { return ''; }
+  }
+  function surveillerEcranDeconnexion(brut) {
     if (ecranVu || !document.body) return;
+    if (brut.indexOf('have been disconnected') === -1) return;
     var t = document.body.innerText || '';
     if (t.indexOf('have been disconnected') === -1) return;
     ecranVu = true;
@@ -423,24 +429,27 @@
   // du client, qui affiche le nombre de morceaux AFFICHÉS sur le nombre reçu. En 1.21.11 il reste
   // sur « 0 % (0 / 169) » : les morceaux arrivent bien par le réseau, c'est l'affichage qui ne sait
   // pas les construire. Compter les morceaux reçus côté réseau induirait en erreur — ils arrivent.
-  var MONDE_VIDE_MS = 40000;
+  var MONDE_VIDE_MS = 40000;    // au-delà, un écran encore vide n'est plus un chargement normal
+  var GRACE_MS = 15000;         // avant, l'indicateur du client peut n'être pas encore apparu
   var depuisCharge = 0, mondeVu = false, mondeSignale = false;
-  function indicateurChunks() {
-    if (!document.body) return null;
+  function indicateurChunks(brut) {
+    if (brut.indexOf('Loading world chunks') === -1) return null;
     var t = document.body.innerText || '';
     var i = t.indexOf('Loading world chunks');
     if (i === -1) return null;
     var m = t.slice(i, i + 80).match(/(\d+)\s*%/);
     return m ? Number(m[1]) : null;
   }
-  function surveillerMondeVide() {
+  function surveillerMondeVide(brut) {
     if (mondeVu || mondeSignale) return;
     if (!inGameNow()) { depuisCharge = 0; return; }
-    var pct = indicateurChunks();
-    if (pct === null) { mondeVu = true; return; }   // plus d'indicateur : le monde est affiché
-    if (pct > 0) { mondeVu = true; return; }
     var maintenant = Date.now();
     if (!depuisCharge) { depuisCharge = maintenant; return; }
+    var pct = indicateurChunks(brut);
+    // Pas d'indicateur : le monde est affiché — mais seulement une fois passé le délai de grâce.
+    // Conclure tout de suite laisserait passer un indicateur qui apparaît une seconde plus tard.
+    if (pct === null) { if (maintenant - depuisCharge > GRACE_MS) mondeVu = true; return; }
+    if (pct > 0) { mondeVu = true; return; }
     if (maintenant - depuisCharge < MONDE_VIDE_MS) return;
     mondeSignale = true;
     console.warn(TAG, 'en jeu depuis ' + Math.round((maintenant - depuisCharge) / 1000) + ' s, aucun morceau de terrain affiché');
@@ -452,8 +461,9 @@
   // de la boucle du régulateur, qui peuvent ne jamais démarrer si l'échec survient tôt. Un test de
   // chaîne toutes les 1,5 s est négligeable, et la surveillance s'arrête dès qu'elle a servi.
   var veille = setInterval(function () {
-    try { surveillerEcranDeconnexion(); } catch (e) {}
-    try { surveillerMondeVide(); } catch (e) {}
+    var brut = texteBrut();
+    try { surveillerEcranDeconnexion(brut); } catch (e) {}
+    try { surveillerMondeVide(brut); } catch (e) {}
     if (ecranVu) clearInterval(veille);
   }, 1500);
 

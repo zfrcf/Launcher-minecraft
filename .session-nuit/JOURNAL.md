@@ -116,3 +116,21 @@
 - Vérifié en remettant 1.21.11 : le build s'arrête, code de sortie 1, et le message nomme la liste
   fautive. → OK
 - `test.js` : 27 contrôles.
+
+## 10 h 50 – 11 h 30 — Relecture critique de mes propres ajouts du matin
+
+- Deux défauts trouvés dans le chien de garde que je venais d'écrire, avant qu'ils n'atteignent le
+  site :
+  1. Il lisait `innerText` toutes les 1,5 s. Cette lecture force un recalcul de mise en page à
+     chaque appel : sur un mod dont le seul but est la fluidité, c'est une faute. Remplacé par un
+     pré-filtre `textContent`, qui ne force rien, et `innerText` n'est lu que dans les rares
+     instants où le texte surveillé est effectivement présent.
+  2. Il concluait « le monde est affiché » dès que l'indicateur du client était absent. Sur une
+     machine où cet indicateur apparaît une seconde après l'entrée en jeu, la panne serait passée
+     inaperçue pour le reste de la partie. Ajout d'un délai de grâce de 15 secondes avant de
+     conclure quoi que ce soit.
+- Les trois scénarios rejoués après la correction : bandeau en 1.21.11, aucun bandeau en 1.21.8,
+  bandeau sur compte refusé, aucun bandeau sur partie normale. → OK
+- Parcours complet sur téléphone (Pixel 7) contre un vrai serveur : en jeu, monde affiché, profil
+  mobile (distance 2), boutons tactiles, aucun bandeau. → OK
+- Suites complètes : `minecraft-web` npm test OK, profils d'appareil OK, `test.js` 28 contrôles.
