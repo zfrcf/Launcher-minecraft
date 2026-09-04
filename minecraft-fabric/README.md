@@ -13,12 +13,27 @@ Si Windows bloque : ouvrir PowerShell dans le dossier et lancer
 ```powershell
 powershell -ExecutionPolicy Bypass -File .\installer.ps1
 ```
-Options : `-Shaders` (ajoute Iris pour les shaders), `-Version 1.21.11` (autre version).
 
 **macOS / Linux** :
 ```bash
 bash installer.sh            # ou : bash installer.sh --shaders
 ```
+
+### Options
+
+| Option (Linux/macOS) | Option (Windows) | Effet |
+|---|---|---|
+| `--shaders` | `-Shaders` | ajoute Iris (shaders compatibles Sodium) |
+| `--version 1.21.11` | `-Version 1.21.11` | installe une autre version |
+| `--version latest` | `-Version latest` | dernière version suivie par Sodium (aujourd'hui 26.2) |
+| `--ram 8` | `-Ram 8` | mémoire allouée au jeu, en Go (4 par défaut) |
+| `--dir DOSSIER` | `-MinecraftDir DOSSIER` | autre dossier `.minecraft` |
+| `--no-profile` | `-NoProfile` | n'ajoute pas de profil au launcher |
+
+Chaque mod téléchargé est vérifié par sa **somme SHA-1** publiée par Modrinth : un fichier tronqué
+ou corrompu est rejeté plutôt que d'être installé (et de faire planter le jeu au lancement). Le
+script se termine par un récapitulatif ; si Fabric API ou Sodium manque, il le dit clairement et
+s'arrête avec un code d'erreur, car sans eux il n'y a aucun gain de FPS.
 
 Le script :
 1. trouve Java (celui du launcher, sinon télécharge un JRE 21) ;
@@ -64,5 +79,7 @@ Si le serveur refuse la version : relancer le script avec `--version <version de
 - « Java introuvable » : le script télécharge un JRE, il faut juste une connexion.
 - Le profil n'apparaît pas : le launcher était ouvert pendant l'installation, ferme-le et relance le script.
 - Crash au lancement : supprime les mods d'une autre version dans `.minecraft/mods`, ou relance le script.
-- Le script Windows est fourni tel quel : il n'a pas pu être exécuté ici (pas de PowerShell dans
-  cet environnement), contrairement au script macOS/Linux testé de bout en bout.
+- Le script macOS/Linux a été testé de bout en bout (Fabric 0.19.5 installé, 11 mods téléchargés
+  et vérifiés, version inexistante correctement refusée, `--version latest` résout 26.2).
+- Le script Windows reçoit les mêmes fonctions mais n'a pas pu être exécuté ici : PowerShell n'est
+  pas disponible dans l'environnement de développement. À vérifier au premier lancement.

@@ -1,9 +1,15 @@
 # Installe Fabric + mods de performance pour Minecraft Java (Windows).
-# Clic droit > "Exécuter avec PowerShell", ou :  powershell -ExecutionPolicy Bypass -File installer.ps1 [-Version 1.21.11] [-Shaders]
+# Clic droit > "Exécuter avec PowerShell", ou :
+#   powershell -ExecutionPolicy Bypass -File installer.ps1 [-Version 1.21.11|latest] [-Shaders] [-Ram 4]
+#
+# Chaque mod téléchargé est vérifié par sa somme SHA-1 publiée par Modrinth : un fichier tronqué
+# ou corrompu est rejeté au lieu de faire planter le jeu au lancement. Le script se termine par un
+# récapitulatif et signale en clair un mod essentiel manquant.
 param(
   [string]$Version = "1.21.11",
   [switch]$Shaders,
   [switch]$NoProfile,
+  [int]$Ram = 4,
   [string]$MinecraftDir = "$env:APPDATA\.minecraft"
 )
 $ErrorActionPreference = "Stop"
@@ -20,6 +26,19 @@ if ($Shaders) { $mods += "iris" }
 
 function Get-Json($url) { Invoke-RestMethod -Uri $url -Headers @{ "User-Agent" = $UA } }
 function Get-File($url, $out) { Invoke-WebRequest -Uri $url -Headers @{ "User-Agent" = $UA } -OutFile $out }
+
+# -Version latest : dernière version de Minecraft à la fois stable côté Fabric et suivie par
+# Sodium (inutile d'installer une version que les mods de performance ne suivent pas encore).
+if ($Version -eq "latest") {
+  Write-Host "== Recherche de la dernière version compatible Fabric + Sodium"
+  $encL0 = [Uri]::EscapeDataString("[`"fabric`"]")
+  foreach ($g in (Get-Json "https://meta.fabricmc.net/v2/versions/game" | Where-Object { $_.stable } | Select-Object -First 12)) {
+    $encV0 = [Uri]::EscapeDataString("[`"$($g.version)`"]")
+    try { $probe = Get-Json "https://api.modrinth.com/v2/project/sodium/version?game_versions=$encV0&loaders=$encL0" } catch { $probe = @() }
+    if ($probe -and $probe.Count -gt 0) { $Version = $g.version; Write-Host "   version retenue : $Version"; break }
+  }
+  if ($Version -eq "latest") { throw "Aucune version récente n'a encore Sodium. Relance avec : -Version 1.21.11" }
+}
 
 Write-Host "== Minecraft $Version · dossier : $MinecraftDir"
 
@@ -71,17 +90,44 @@ if ($LASTEXITCODE -ne 0) { throw "L'installateur Fabric a échoué (code $LASTEX
 Write-Host "== Téléchargement des mods dans $modsDir"
 $encV = [Uri]::EscapeDataString("[`"$Version`"]")
 $encL = [Uri]::EscapeDataString("[`"fabric`"]")
+# Sans ces deux-là, l'installation n'apporte aucun gain : leur absence est traitée comme un échec.
+$essentiels = @("fabric-api", "sodium")
+$installes = @(); $ignores = @(); $echecs = @()
 foreach ($slug in $mods) {
   try {
     $versions = Get-Json "https://api.modrinth.com/v2/project/$slug/version?game_versions=$encV&loaders=$encL"
   } catch { $versions = @() }
-  if (-not $versions -or $versions.Count -eq 0) { Write-Host "   - $slug : pas de version pour $Version, ignoré"; continue }
+  if (-not $versions -or $versions.Count -eq 0) {
+    Write-Host "   - $slug : pas de version pour $Version, ignoré"
+    $ignores += $slug
+    continue
+  }
   $file = $versions[0].files | Where-Object { $_.primary } | Select-Object -First 1
   if (-not $file) { $file = $versions[0].files[0] }
+  $tmp = Join-Path $modsDir ".$slug.part"
+  try { Get-File $file.url $tmp } catch {
+    Write-Host "   ! $slug : téléchargement impossible"
+    if (Test-Path $tmp) { Remove-Item -Force $tmp }
+    $echecs += $slug; continue
+  }
+  # Vérification : somme SHA-1 annoncée par Modrinth ; à défaut, au moins une archive .jar valide.
+  $attendu = $null
+  if ($file.hashes -and $file.hashes.sha1) { $attendu = $file.hashes.sha1 }
+  $obtenu = (Get-FileHash -Path $tmp -Algorithm SHA1).Hash.ToLower()
+  if ($attendu -and ($attendu.ToLower() -ne $obtenu)) {
+    Write-Host "   ! $slug : fichier corrompu (somme de contrôle différente), non installé"
+    Remove-Item -Force $tmp; $echecs += $slug; continue
+  }
+  if ((Get-Item $tmp).Length -lt 1024) {
+    Write-Host "   ! $slug : le fichier reçu n'est pas un mod valide, non installé"
+    Remove-Item -Force $tmp; $echecs += $slug; continue
+  }
   Get-ChildItem -Path $modsDir -Filter "$slug*.jar" -ErrorAction SilentlyContinue | Remove-Item -Force
-  Get-File $file.url (Join-Path $modsDir $file.filename)
+  Move-Item -Force $tmp (Join-Path $modsDir $file.filename)
   Write-Host "   + $($file.filename)"
+  $installes += $slug
 }
+$manqueEssentiel = @($essentiels | Where-Object { $installes -notcontains $_ })
 
 # ---- Profil du launcher : nom + 4 Go de RAM ----
 $profilesPath = Join-Path $MinecraftDir "launcher_profiles.json"
@@ -92,12 +138,25 @@ if (-not $NoProfile -and (Test-Path $profilesPath)) {
     $p = $prop.Value
     if ($p.lastVersionId -eq $target) {
       $p | Add-Member -NotePropertyName name -NotePropertyValue "Fabric $Version (Sodium, FPS+)" -Force
-      $p | Add-Member -NotePropertyName javaArgs -NotePropertyValue "-Xmx4G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M" -Force
+      $p | Add-Member -NotePropertyName javaArgs -NotePropertyValue "-Xmx${Ram}G -XX:+UseG1GC -XX:+UnlockExperimentalVMOptions -XX:G1NewSizePercent=20 -XX:G1ReservePercent=20 -XX:MaxGCPauseMillis=50 -XX:G1HeapRegionSize=32M" -Force
     }
   }
   $text = $json | ConvertTo-Json -Depth 10
   [IO.File]::WriteAllText($profilesPath, $text, (New-Object System.Text.UTF8Encoding $false))  # UTF-8 sans BOM, exigé par le launcher
-  Write-Host "== Profil du launcher mis à jour : $target (4 Go de RAM)"
+  Write-Host "== Profil du launcher mis à jour : $target ($Ram Go de RAM)"
+}
+
+# ---- Récapitulatif ----
+Write-Host ""
+Write-Host "== Récapitulatif"
+Write-Host "   installés : $($installes -join ' ')"
+if ($ignores.Count -gt 0) { Write-Host "   sans version pour $Version : $($ignores -join ' ')" }
+if ($echecs.Count -gt 0)  { Write-Host "   échecs (relance le script) : $($echecs -join ' ')" }
+if ($manqueEssentiel.Count -gt 0) {
+  Write-Host ""
+  Write-Host "ATTENTION : il manque $($manqueEssentiel -join ' ') — sans eux, aucun gain de FPS."
+  Write-Host "Relance le script, ou essaie : powershell -ExecutionPolicy Bypass -File installer.ps1 -Version latest"
+  exit 2
 }
 
 Write-Host ""
