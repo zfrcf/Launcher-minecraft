@@ -41,3 +41,22 @@
 | 11:05 | Tests de non-régression ajoutés pour la page de planning (12 vérifications : équilibrage du repli, absence de règles d'impression, gardes de saisie, échappement des noms). Test du test : le défaut d'origine réintroduit fait bien échouer la suite. La comparaison du mod dans l'autre suite accepte désormais un build sans fichiers locaux. | OK |
 | 11:20 | Points mineurs de la revue traités : effacement des cookies sur tous les domaines parents plausibles (les anciennes lignes étaient inopérantes sur vercel.app), requêtes du diagnostic réellement interrompues au délai (plus de requêtes ni de minuteurs en suspens), liste des relais dédoublonnée et bornée à 8, lecture du HUD simplifiée. | OK |
 | 11:35 | Défaut non relevé par la revue et corrigé : les réglages avaient changé sans que leur numéro de version bouge, donc un joueur ayant déjà chargé le site n'aurait jamais reçu la correction de détection tactile. Numéro porté à 7, migration vérifiée. Test navigateur ajouté au dépôt : les 4 profils d'appareil (PC, PC tactile, Android, iPad) sont correctement reconnus. | OK |
+
+## 07 h 50 – 08 h 30 — Reprise des mesures : la mesure était fausse, et elle cachait la vraie panne
+
+- En relisant les captures d'écran de la mesure de 06 h 47, j'ai vu l'écran « You Died! » et
+  « Loading world chunks 0 % » sur les deux. Le monde n'était jamais affiché : les 60 images par
+  seconde mesurées ne mesuraient rien. **Résultat annulé.**
+- Recherche de la cause : serveur redémarré en créatif et en paisible, monde peuplé côté console
+  (72 000 blocs, 162 entités, chunks maintenus chargés). Toujours 0 chunk reçu.
+- Journal du navigateur : `Do not have data for 1.21.11`. Le client négocie le protocole mais n'a
+  pas les données de blocs de cette version. **C'est la panne.**
+- Serveur Minecraft 1.21.8 monté à côté, même scène : 81 colonnes de chunks, monde affiché, joueur
+  vivant. Confirmation directe. → OK
+- Correction : `VERSION_CLIENT = '1.21.8'` dans `mod.js`, `SEED_VERSION` 7 → 8, liste des versions
+  affichables et alerte dédiée dans `diagnostic.html`. Décision D7.
+- Mesure refaite proprement, trois répétitions, résultats identiques à une image près :
+  4 images par seconde sans le mod contre 8 à 9 avec ; à distance de rendu imposée identique,
+  3 contre 6 à 7. Rendu logiciel : le rapport compte, pas les valeurs absolues. → OK
+- `RAPPORT.md` corrigé : l'affirmation « 3,4 fois plus de terrain » est retirée, remplacée par les
+  mesures valides et par ce qu'elles ne prouvent pas.

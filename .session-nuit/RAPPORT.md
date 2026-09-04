@@ -2,8 +2,10 @@
 
 ## Résumé en 5 lignes
 
-Les mods Fabric ne pourront jamais tourner dans un navigateur : j'ai donc poussé le client web au
-maximum de ce qu'il permet, et ajouté ce qui manquait pour comprendre et corriger les blocages.
+**J'ai trouvé pourquoi DonutSMP ne chargeait pas** : le mod imposait la version 1.21.11, que ce
+client sait négocier mais pas afficher. Il se connectait, puis restait sur un écran vide. Il se
+connecte maintenant en 1.21.8, vérifié sur un vrai serveur. Pour le reste : les mods Fabric ne
+tourneront jamais dans un navigateur, j'ai donc poussé le client web au maximum de ce qu'il permet.
 Le site DonutSMP a maintenant une page de diagnostic, des messages d'erreur en français, un choix
 de relais et un écran d'explication quand le navigateur bloque le stockage. CubeCraft Web passe en
 plein écran partout et ajuste sa distance de rendu aux FPS. Les installateurs Fabric vérifient
@@ -30,8 +32,8 @@ Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octe
   refusée, connexion coupée) ou quand le chargement dépasse 45 secondes.
 - Écran d'explication quand le navigateur refuse le stockage local : avant, le client s'arrêtait
   sur une page vide sans un mot.
-- Mod v6 : réglages à risque retirés, mode `?safe=1` pour isoler une panne, cookies concurrents
-  nettoyés.
+- Mod v8 : connexion en 1.21.8 (voir plus bas, c'est le correctif le plus important de la nuit),
+  réglages à risque retirés, mode `?safe=1` pour isoler une panne, cookies concurrents nettoyés.
 
 **CubeCraft Web** (`minecraft-web/`)
 - Plein écran partout (accueil, menus, jeu), PC et mobile, avec la touche Échap qui ouvre le menu
@@ -65,17 +67,63 @@ J'ai fini par monter un **serveur Minecraft Java 1.21.11 officiel** sur cette ma
 relais WebSocket, et j'ai connecté le client web dessus. Ce n'est plus une simulation : c'est la
 chaîne complète, navigateur → mod → client → relais → serveur.
 
-- Entrée en jeu confirmée : pseudo, barre de vie, barre d'action, chargement des chunks.
+- Entrée en jeu confirmée : pseudo, barre de vie, barre d'action. **Attention** : ces premiers
+  essais étaient en 1.21.11, où le monde ne s'affiche jamais (voir la section suivante). Tout a été
+  refait en 1.21.8, avec le monde réellement affiché.
 - **Le mod fonctionne en conditions réelles** : « 14 FPS : distance de rendu → 3 », puis
   « 59 FPS : distance de rendu → 4 ». Il descend quand ça rame et remonte quand ça respire.
 - Le chat marche : message envoyé, relayé par le serveur, reçu et affiché.
 - Même chose en mode mobile tactile : réglages adaptés, connexion, boutons tactiles, en jeu.
 
-**Mesure avec et sans le mod, sur le même serveur** : 60 images par seconde dans les deux cas (le
-plafond de l'écran), mais distance de rendu 3 sans le mod contre 6 avec, soit 49 chunks affichés
-contre 169. Autrement dit : à confort égal, le mod te fait voir **3,4 fois plus de terrain**. Sur un
-monde de test presque vide, il ne peut pas faire mieux que le plafond. Sur DonutSMP, où la scène est
-chargée, c'est l'inverse qui joue : la distance baisse toute seule pour protéger la fluidité.
+## La panne qui expliquait « DonutSMP ne charge même pas »
+
+En reprenant ces mesures au matin, je me suis aperçu qu'elles ne valaient rien : les captures
+d'écran montraient l'écran « You Died! » et le compteur « Loading world chunks 0 % ». Le monde
+n'était jamais affiché. Les 60 images par seconde annoncées plus haut étaient donc **60 images par
+seconde de rien du tout**. J'ai cherché pourquoi, et c'est là que se trouvait le vrai problème.
+
+Le journal du navigateur donne la cause en une ligne : `Do not have data for 1.21.11`. Ce client
+web **sait parler** le protocole 1.21.11, mais il **n'embarque pas les données de blocs** de cette
+version. Conséquence : la connexion réussit, le pseudo apparaît, le chat fonctionne — et l'écran
+reste vide pour toujours. Or le mod forçait précisément la connexion à DonutSMP en 1.21.11.
+
+Vérification sur le même serveur, la même scène, la même machine :
+
+| Version de connexion | Colonnes de chunks reçues | Monde affiché |
+|---|---|---|
+| 1.21.11 | 0 | non, écran bloqué |
+| 1.21.8 | 81 | oui |
+
+Le mod se connecte désormais en **1.21.8**, la version la plus récente dont ce client possède les
+données. DonutSMP annonce accepter de 1.7.2 à la dernière version : rien ne s'y oppose. La page de
+diagnostic signale maintenant, en rouge, une entrée de serveur configurée sur une version que le
+client ne sait pas afficher. Les joueurs déjà venus sont corrigés automatiquement.
+
+**C'est très probablement la cause de « DonutSMP ne charge même pas ».** Je ne peux pas le prouver
+depuis cette machine, qui n'a pas de compte Microsoft pour entrer sur DonutSMP : à toi de confirmer
+en ouvrant le site.
+
+## Ce que le mod apporte vraiment
+
+Une fois le monde réellement affiché, j'ai refait la mesure proprement : serveur local 1.21.8,
+72 000 blocs posés, 162 entités, chunks maintenus chargés, joueur vivant, trois répétitions.
+
+| | Sans le mod | Avec le mod |
+|---|---|---|
+| Images par seconde, réglages libres | 4 | 8 à 9 |
+| Distance de rendu choisie | 3 | 2 |
+| Images par seconde, distance imposée à 5 des deux côtés | 3 | 6 à 7 |
+
+Deux lectures. À réglages libres, le mod **double** le nombre d'images par seconde, en partie parce
+qu'il baisse lui-même la distance de rendu quand ça rame. À distance de rendu identique, il la
+double encore : le gain ne vient donc pas seulement de la distance, mais aussi des autres réglages
+(pas de skins téléchargés, éclairage simplifié, particules réduites).
+
+**Ce que cette mesure ne dit pas.** Cette machine n'a pas de carte graphique : le rendu passe par
+un émulateur logiciel. Les 4 et 9 images par seconde n'ont donc aucun sens en valeur absolue — sur
+ton PC ou ton téléphone, ce sera bien plus. Le rapport entre les deux colonnes est ce qui compte,
+et lui-même peut différer sur du vrai matériel, où c'est la carte graphique qui limite et non le
+processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffrée.
 
 ## Ce que j'ai testé pour de vrai
 
@@ -90,6 +138,9 @@ chargée, c'est l'inverse qui joue : la distance baisse toute seule pour protég
 | CubeCraft multijoueur, serveur dédié | 2 joueurs connectés, chat transmis |
 | Persistance du monde après redémarrage du serveur | bloc posé retrouvé |
 | Distance de rendu adaptative | 5 → 4 → 3 → 2, sans oscillation |
+| Connexion en 1.21.11 sur un vrai serveur | monde jamais affiché (0 chunk) — cause trouvée |
+| Connexion en 1.21.8 sur le même serveur | monde affiché, 81 chunks, joueur vivant |
+| Mesure images par seconde avec et sans le mod, scène chargée | 4 contre 8-9, trois répétitions |
 | Relais WebSocket personnel (mwc-proxy) | démarre et répond correctement |
 | Page de planning : employé, shift, rechargement | données conservées, aucune erreur |
 | Page de planning sans aucun CDN | lisible, parcours complet fonctionnel |
