@@ -159,3 +159,12 @@
 - Corrigé : l'amorce épingle le commit visé (le fichier change donc à chaque déploiement, et le
   site déployé vient d'un commit précis), et la page de diagnostic passe en `no-cache`. Décision D9.
 - `test.js` : 30 contrôles.
+
+## 12 h 40 – 13 h 10 — Vérification finale de ce qui est en ligne
+
+- Déploiement avec le commit épinglé : la page de diagnostic s'est enfin mise à jour.
+- Comparaison octet à octet avec le dépôt : le mod servi (30 603 octets) et la page de diagnostic
+  (18 371 octets) sont identiques aux fichiers commités. → OK
+- Vérification dans un vrai navigateur, sur la copie servie par Vercel : joueur neuf en 1.21.8,
+  joueur venu hier en 1.21.11 corrigé automatiquement, page de diagnostic qui signale en rouge une
+  version non affichable, bouton d'essai en solo présent. → OK

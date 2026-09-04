@@ -17,7 +17,10 @@ chaque téléchargement. Deux vrais bugs corrigés dans l'outil de planning.
 | Diagnostic | <https://minecraft-donutsmp.vercel.app/diagnostic> | déployé et vérifié |
 | CubeCraft Web | <https://cubecraft-web.vercel.app> | déployé et vérifié |
 
-Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octet avec le dépôt.
+Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octet avec le dépôt. Le
+déploiement épingle maintenant le commit exact qu'il sert : sans cela, Vercel réutilisait le build
+précédent quand les fichiers envoyés n'avaient pas changé, et annonçait « prêt » sans rien avoir
+mis à jour. Ça m'est arrivé une fois, en fin de matinée.
 
 ## La panne qui expliquait « DonutSMP ne charge même pas »
 C'est le correctif le plus important, et je l'ai trouvé par accident. En reprenant au matin mes
