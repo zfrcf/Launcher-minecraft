@@ -2,7 +2,10 @@
 // Il joue, côté navigateur, le rôle des mods FPS du jeu officiel (Sodium, Entity Culling,
 // Dynamic FPS…) qui ne peuvent pas s'exécuter ici : ce sont des mods Java.
 //
-// Trois blocs :
+// Blocs :
+//  0. STOCKAGE INDISPONIBLE : si le navigateur refuse d'enregistrer des données (navigation privée
+//     stricte, cookies bloqués), le client s'arrête sur une page vide sans un mot ; on affiche à la
+//     place un écran qui explique quoi changer.
 //  1. PROFIL PERFORMANCE : tous les réglages du client poussés au maximum, adaptés à la
 //     puissance de l'appareil (cœurs CPU, mémoire, écran tactile). Réappliqué quand
 //     SEED_VERSION change, ou avec ?reset=1.
@@ -44,6 +47,14 @@
     'renderDebug', 'fov', 'menuBackgroundMode', 'displayLoadingMessages', 'enableMusic', 'errorReporting', 'backgroundRendering',
     'preventBackgroundTimeoutKick', 'preventSleep', 'autoFullScreen', 'autoExitFullscreen', 'autoDisplayRotation', 'showHand', 'guiScale'];
 
+  // Le client se sert du stockage local sans filet : si le navigateur le refuse (navigation privée
+  // stricte, cookies et données de site bloqués), il s'arrête sur une page vide, sans un mot. On
+  // teste d'abord, et on explique au joueur ce qu'il doit changer.
+  function stockageUtilisable() {
+    try { var t = '__test_mod__'; localStorage.setItem(t, '1'); localStorage.removeItem(t); return true; }
+    catch (e) { return false; }
+  }
+
   function read(k) { try { var raw = localStorage.getItem(k); if (!raw) return null; var p = JSON.parse(raw); return (p && !Array.isArray(p) && p.data !== undefined) ? p.data : p; } catch (e) { return null; } }
   // Le client peut aussi stocker ces clés en cookie (prioritaire sur le stockage local quand il existe).
   // On efface le cookie du même nom pour que le stockage local fasse foi et qu'aucun « conflit de
@@ -59,7 +70,34 @@
   }
   function write(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); dropCookie(k); } catch (e) {} }
 
-  // ------------------------------------------------------------------ 0. MODE SANS RISQUE
+  // ------------------------------------------------------------------ 0. STOCKAGE INDISPONIBLE
+  if (!stockageUtilisable()) {
+    console.warn(TAG, 'stockage local refusé par le navigateur : le client ne peut pas démarrer');
+    var direBloque = function () {
+      var b = document.createElement('div');
+      b.setAttribute('style', 'position:fixed;inset:0;z-index:2147483647;background:#0f1115;color:#e6e6e6;font:15px/1.55 system-ui,sans-serif;padding:28px 22px;overflow:auto');
+      var h = document.createElement('h2'); h.textContent = 'Le jeu ne peut pas démarrer sur ce navigateur';
+      h.setAttribute('style', 'margin:0 0 10px;font-size:20px');
+      var p1 = document.createElement('p');
+      p1.textContent = "Le navigateur refuse d'enregistrer des données pour ce site. Le jeu en a besoin pour retenir tes réglages et ta connexion : sans cela, il s'arrête sur une page vide.";
+      var p2 = document.createElement('p'); p2.textContent = 'Que faire :';
+      var ul = document.createElement('ul');
+      ['Quitter la navigation privée et rouvrir le site dans une fenêtre normale.',
+       'Autoriser les cookies et les données de site pour ce site (icône à gauche de l’adresse).',
+       'Désactiver, pour ce site seulement, une extension qui bloque le stockage.'].forEach(function (t) {
+        var li = document.createElement('li'); li.textContent = t; ul.appendChild(li);
+      });
+      var a = document.createElement('a'); a.href = './diagnostic'; a.textContent = 'Lancer le diagnostic';
+      a.setAttribute('style', 'display:inline-block;margin-top:10px;padding:9px 14px;border-radius:8px;background:#2563eb;color:#fff;text-decoration:none');
+      b.appendChild(h); b.appendChild(p1); b.appendChild(p2); b.appendChild(ul); b.appendChild(a);
+      document.body.appendChild(b);
+    };
+    if (document.body) direBloque();
+    else document.addEventListener('DOMContentLoaded', direBloque);
+    return;
+  }
+
+  // ------------------------------------------------------------------ 0 bis. MODE SANS RISQUE
   if (/[?&]safe=1/.test(q)) {
     try {
       var clean = read('changedSettings') || {};

@@ -39,6 +39,9 @@ de la page avant le client :
 - **Aide en cas d'échec** : si le client affiche une erreur (relais en panne, compte Microsoft,
   version refusée, connexion coupée) ou si le chargement dépasse 45 s, un bandeau en français
   explique la cause probable et propose : Diagnostic, Réessayer, Mode sans risque.
+- **Navigateur qui bloque le stockage** : en navigation privée stricte ou avec les cookies
+  refusés, le client s'arrêtait sur une page vide sans explication. Le mod détecte le cas et
+  affiche la marche à suivre.
 - **Page `/diagnostic`** : teste en quelques secondes le relais public, le statut de DonutSMP, la
   carte graphique (WebGL 2), WebAssembly, l'appareil, l'état du mod et le plein écran, avec la
   solution pour chaque point en défaut. Bouton « Copier le rapport » pour le transmettre.
