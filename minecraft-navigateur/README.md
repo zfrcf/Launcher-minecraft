@@ -53,6 +53,15 @@ de la page avant le client :
   du client). Si DonutSMP charge en `?safe=1` et pas sans, le mod est en cause ; sinon le blocage
   vient du relais ou du serveur.
 
+### Vérifier après une modification
+
+```bash
+cd minecraft-navigateur/site
+npm run build      # récupère le client et injecte le mod
+npm test           # 16 contrôles sans navigateur
+node test-navigateur.js   # profils d'appareil, nécessite Playwright et Chromium
+```
+
 Les mods réels côté client (Fabric) restent la seule option pour des FPS élevés sur PC : voir
 `minecraft-fabric/`.
 

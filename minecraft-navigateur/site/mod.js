@@ -24,7 +24,11 @@
 (function () {
   'use strict';
   var TAG = '[mod-optimisation]';
-  var SEED_VERSION = 6;
+  // Numéro des réglages. À incrémenter dès qu'un réglage change de valeur, sinon les joueurs qui
+  // ont déjà chargé le site gardent l'ancien profil : la condition ci-dessous ne réapplique rien
+  // tant que le numéro n'a pas bougé.
+  // v7 : la détection d'écran tactile ne classe plus un PC à dalle tactile comme un téléphone.
+  var SEED_VERSION = 7;
   var MARK = 'mwcSeedVersion';
   var q = location.search;
   // Un PC à dalle tactile a maxTouchPoints > 0 tout en ayant une souris : le prendre pour un
