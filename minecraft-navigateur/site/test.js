@@ -27,6 +27,16 @@ verifie('mod.js est du JavaScript valide', (() => {
 })() === true);
 verifie("mod.js ne contient pas </script> (il est injecté dans une balise script)", !mod.includes('</script>'));
 verifie('mod.js protège chaque accès au stockage', mod.includes('stockageUtilisable'));
+
+// La version imposée est le réglage le plus dangereux du mod : une version que le client sait
+// négocier mais pas afficher donne une connexion réussie et un écran vide pour toujours. Ces trois
+// contrôles empêchent que cela revienne par inadvertance.
+const AFFICHABLES = ['1.21.1', '1.21.3', '1.21.4', '1.21.5', '1.21.6', '1.21.8'];
+const versionMod = (mod.match(/VERSION_CLIENT = '([^']+)'/) || [])[1];
+verifie('mod.js impose une version que le client sait afficher',
+  AFFICHABLES.indexOf(versionMod) !== -1, 'version trouvée : ' + versionMod);
+verifie('mod.js n’impose plus 1.21.11 (le monde ne s’y affiche jamais)', !/versionOverride\s*=\s*'1\.21\.11'/.test(mod));
+
 verifie('mod.js expose les quatre options d’URL documentées',
   ['safe=1', 'reset=1', 'fullscreen=0', 'hud=1'].every((o) => mod.includes(o)));
 
@@ -36,6 +46,12 @@ verifie('diagnostic.html teste les huit points annoncés',
     .every((t) => diag.includes(t)));
 verifie('diagnostic.html propose le retour au jeu et le mode sans risque',
   diag.includes('./?modal=serversList') && diag.includes('safe=1'));
+
+const versionDiag = (diag.match(/CLIENT_VERSION = '([^']+)'/) || [])[1];
+verifie('diagnostic.html annonce la même version que mod.js', versionDiag === versionMod,
+  'diagnostic : ' + versionDiag + ', mod : ' + versionMod);
+verifie('diagnostic.html signale une version que le client ne sait pas afficher',
+  diag.includes('VERSIONS_AFFICHABLES') && diag.includes('n’est pas affichable'));
 
 verifie('diagnostic.html permet de tester et mémoriser un relais personnel',
   ["id=\"relaisTester\"", "id=\"relaisUtiliser\"", "id=\"relaisPublic\"", "proxiesData"].every((t) => diag.includes(t)));

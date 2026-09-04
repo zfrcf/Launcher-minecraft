@@ -56,3 +56,19 @@ donc d'un détail d'implémentation qui casserait à la prochaine mise à jour d
 automatiquement.
 
 **Portée probable.** C'est très vraisemblablement la cause de « DonutSMP ne charge même pas ».
+
+## D8 — Le déploiement Vercel n'envoie plus qu'une amorce
+
+**Contexte.** Le déploiement envoie les fichiers encodés dans l'appel de l'outil. Recopier
+`build.js` (5 300 octets) à la main à chaque déploiement a déjà produit un octet abîmé passé
+inaperçu, et vient de produire un fichier tronqué.
+
+**Choix.** `minecraft-navigateur/site/build-vercel.js` : trente lignes qui téléchargent le vrai
+`build.js` depuis le dépôt et l'exécutent. C'est ce fichier qui est déployé, sous le nom
+`build.js`.
+
+**Conséquence utile.** Une correction poussée sur la branche prend effet au prochain build sans
+redéployer. Le site servi est, par construction, ce qui est commité.
+
+**Risque assumé.** Si GitHub est injoignable au moment du build, le build échoue. C'était déjà le
+cas : `mod.js` et `diagnostic.html` étaient déjà récupérés depuis le dépôt.

@@ -60,3 +60,15 @@
   3 contre 6 à 7. Rendu logiciel : le rapport compte, pas les valeurs absolues. → OK
 - `RAPPORT.md` corrigé : l'affirmation « 3,4 fois plus de terrain » est retirée, remplacée par les
   mesures valides et par ce qu'elles ne prouvent pas.
+
+## 08 h 30 – 09 h 10 — Mise en ligne du correctif et garde-fous
+
+- `test.js` : trois contrôles ajoutés — la version imposée par `mod.js` doit faire partie des
+  versions affichables, `diagnostic.html` doit annoncer la même, et la page doit savoir signaler
+  une version muette. Vérifié qu'ils échouent bien si on remet 1.21.11. → OK (20 contrôles)
+- `test-navigateur.js` : les quatre profils d'appareil passent toujours. → OK
+- Déploiement : le premier envoi contenait un `build.js` tronqué (erreur de recopie). Remplacé par
+  une amorce de trente lignes qui récupère le vrai build depuis le dépôt. Décision D8.
+- Site en ligne vérifié dans un vrai navigateur, sur la copie servie par Vercel :
+  joueur neuf → version 1.21.8 ; joueur venu hier en 1.21.11 → corrigé automatiquement en 1.21.8 ;
+  page de diagnostic → croix rouge et explication quand l'entrée est sur une version muette. → OK
