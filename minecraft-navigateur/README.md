@@ -10,6 +10,14 @@ Une seule contrainte technique : un navigateur ne sait pas ouvrir une connexion 
 **relais WebSocket** entre le navigateur et le serveur Minecraft. Le projet en fournit un public
 et gratuit (utilisé par défaut), et tu peux héberger le tien sur Render (dossier prêt ici).
 
+## Ton site : le client, prêt à jouer sur DonutSMP
+
+Le dossier `site/` déploie sur Vercel la version compilée officielle du client (récupérée au
+moment du build depuis le dépôt public de son intégration continue, dossier `docs/`). L'adresse
+racine ouvre directement le menu du jeu avec `donutsmp.net` en 1.21.11 pré-rempli.
+Pour redéployer ou changer de serveur : modifier `site/vercel.json` (redirection) puis
+redéployer le projet Vercel `minecraft-donutsmp`.
+
 ## Jouer maintenant (0 installation, 0 inscription)
 
 1. Ouvre <https://mcraft.fun/?ip=donutsmp.net&version=1.21.11> (ou le bouton sur
