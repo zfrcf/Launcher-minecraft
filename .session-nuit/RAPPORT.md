@@ -1,7 +1,6 @@
-# Rapport de session — nuit du 4 au 5 septembre 2026
+# Rapport de session — nuit et matinée du 4 septembre 2026
 
 ## Résumé en 5 lignes
-
 **J'ai trouvé pourquoi DonutSMP ne chargeait pas** : le mod imposait la version 1.21.11, que ce
 client sait négocier mais pas afficher. Il se connectait, puis restait sur un écran vide. Il se
 connecte maintenant en 1.21.8, vérifié sur un vrai serveur. Pour le reste : les mods Fabric ne
@@ -12,7 +11,6 @@ plein écran partout et ajuste sa distance de rendu aux FPS. Les installateurs F
 chaque téléchargement. Deux vrais bugs corrigés dans l'outil de planning.
 
 ## Ce qui est en ligne maintenant
-
 | Site | Adresse | État |
 |---|---|---|
 | Minecraft navigateur (DonutSMP) | <https://minecraft-donutsmp.vercel.app> | déployé et vérifié |
@@ -21,66 +19,13 @@ chaque téléchargement. Deux vrais bugs corrigés dans l'outil de planning.
 
 Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octet avec le dépôt.
 
-## Tâches terminées
-
-**Client Minecraft navigateur** (`minecraft-navigateur/`)
-- Page `/diagnostic` : huit tests (relais, serveur DonutSMP, WebGL 2, WebAssembly, appareil, état
-  du mod, plein écran, accès Internet), verdict clair et rapport copiable.
-- Section « Ton relais » : saisir l'adresse de ton relais Render, mesurer sa latence, l'enregistrer
-  comme relais par défaut, ou revenir au relais public.
-- Bandeau d'aide en français quand le client échoue (relais en panne, compte Microsoft, version
-  refusée, connexion coupée) ou quand le chargement dépasse 45 secondes.
-- Écran d'explication quand le navigateur refuse le stockage local : avant, le client s'arrêtait
-  sur une page vide sans un mot.
-- Mod v8 : connexion en 1.21.8 (voir plus bas, c'est le correctif le plus important de la nuit),
-  réglages à risque retirés, mode `?safe=1` pour isoler une panne, cookies concurrents nettoyés.
-
-**CubeCraft Web** (`minecraft-web/`)
-- Plein écran partout (accueil, menus, jeu), PC et mobile, avec la touche Échap qui ouvre le menu
-  du jeu au lieu de sortir, et verrouillage en paysage sur mobile.
-- Qualité automatique à deux niveaux : la résolution s'ajuste aux FPS, puis la distance de rendu
-  descend jusqu'à 2 et remonte quand ça respire.
-- Déploiement ramené de six projets Vercel à un seul.
-
-**Installateurs Fabric** (`minecraft-fabric/`)
-- Chaque mod vérifié par sa somme SHA-1 : un fichier corrompu est rejeté au lieu de faire planter
-  le jeu au lancement.
-- Options `--version latest` (dernière version suivie par Sodium, aujourd'hui 26.2) et `--ram`.
-- Récapitulatif final, arrêt explicite si Fabric API ou Sodium manque, messages d'erreur clairs.
-
-**Outil de planning** (`index.html`) — deux vrais défauts corrigés
-- Un shift pouvait être enregistré **sans collaborateur**. Il n'apparaissait dans aucune ligne de
-  la grille, mais ses heures et son coût étaient bien additionnés : les totaux affichés devenaient
-  faux sans que rien ne le signale. La saisie est maintenant refusée avec un message.
-- Le bouton « AJOUTER » d'un employé ne faisait rien, sans explication, quand le nom ou les heures
-  de contrat manquaient. Chaque champ manquant est désormais nommé.
-
-**Vérifications rejouables**
-- `minecraft-navigateur/site` : `npm test` → 16 contrôles.
-- `minecraft-web` : `npm test` → moteur du jeu, plus cohérence des scripts du site et garde-fous
-  sur le plein écran et la distance adaptative. J'ai vérifié que retirer un script fait bien
-  échouer la suite.
-
-## La vérification qui compte : un vrai serveur Minecraft
-
-J'ai fini par monter un **serveur Minecraft Java 1.21.11 officiel** sur cette machine, avec le
-relais WebSocket, et j'ai connecté le client web dessus. Ce n'est plus une simulation : c'est la
-chaîne complète, navigateur → mod → client → relais → serveur.
-
-- Entrée en jeu confirmée : pseudo, barre de vie, barre d'action. **Attention** : ces premiers
-  essais étaient en 1.21.11, où le monde ne s'affiche jamais (voir la section suivante). Tout a été
-  refait en 1.21.8, avec le monde réellement affiché.
-- **Le mod fonctionne en conditions réelles** : « 14 FPS : distance de rendu → 3 », puis
-  « 59 FPS : distance de rendu → 4 ». Il descend quand ça rame et remonte quand ça respire.
-- Le chat marche : message envoyé, relayé par le serveur, reçu et affiché.
-- Même chose en mode mobile tactile : réglages adaptés, connexion, boutons tactiles, en jeu.
-
 ## La panne qui expliquait « DonutSMP ne charge même pas »
-
-En reprenant ces mesures au matin, je me suis aperçu qu'elles ne valaient rien : les captures
-d'écran montraient l'écran « You Died! » et le compteur « Loading world chunks 0 % ». Le monde
-n'était jamais affiché. Les 60 images par seconde annoncées plus haut étaient donc **60 images par
-seconde de rien du tout**. J'ai cherché pourquoi, et c'est là que se trouvait le vrai problème.
+C'est le correctif le plus important, et je l'ai trouvé par accident. En reprenant au matin mes
+mesures de performance de la nuit, j'ai regardé les captures d'écran : elles montraient l'écran
+« You Died! » et un compteur figé sur « Loading world chunks 0 % ». Le monde n'était jamais
+affiché. Les 60 images par seconde que j'avais mesurées étaient donc **60 images par seconde de
+rien du tout** — un résultat que j'ai retiré de ce rapport. En cherchant pourquoi le monde ne
+s'affichait pas, je suis tombé sur ta panne.
 
 Le journal du navigateur donne la cause en une ligne : `Do not have data for 1.21.11`. Ce client
 web **sait parler** le protocole 1.21.11, mais il **n'embarque pas les données de blocs** de cette
@@ -109,8 +54,32 @@ client ne sait pas afficher. Les joueurs déjà venus sont corrigés automatique
 depuis cette machine, qui n'a pas de compte Microsoft pour entrer sur DonutSMP : à toi de confirmer
 en ouvrant le site.
 
-## Ce que le mod apporte vraiment
+## Les deux autres messages que le jeu te donne maintenant
+DonutSMP exige un compte Microsoft. J'ai reproduit ce refus sur mon serveur de test, et ce que
+voyait le joueur était indéfendable : un écran anglais annonçant « WebSocket connection closed with
+unknown reason », suivi des octets bruts du dernier paquet reçu. Rien qui aide, et un message qui
+oriente vers une panne réseau alors que le problème est le compte.
 
+Le mod affiche maintenant un bandeau en français dans ce cas précis, avec les trois causes
+possibles dans l'ordre de fréquence : compte Microsoft non connecté, serveur qui refuse les
+connexions relayées, serveur saturé. Il sait faire la différence entre « refusé à l'entrée » et
+« coupé en cours de partie », qui produisent le même message technique mais appellent des gestes
+opposés. Vérifié dans les deux sens : le bandeau apparaît sur le refus, et n'apparaît pas sur une
+partie normale.
+
+
+Le plus pénible dans cette panne n'était pas la panne, c'était le silence. J'ai donc ajouté un
+chien de garde : si tu es en jeu depuis plus de quarante secondes et qu'aucun morceau de terrain
+n'est affiché, un bandeau en français apparaît, nomme la cause probable et te donne le geste à
+faire. Vérifié sur deux serveurs réels, dans les deux sens : il apparaît sur la panne, il
+n'apparaît pas sur une partie normale.
+
+Au passage, une erreur de ma part que je préfère écrire noir sur blanc : j'avais d'abord conclu que
+les morceaux de terrain n'arrivaient pas. Faux. Ils arrivent tous, c'est l'affichage qui ne sait
+pas les construire. Ma première version du chien de garde comptait donc la mauvaise chose et
+n'aurait jamais rien signalé. Corrigée, et un contrôle automatique interdit désormais d'y revenir.
+
+## Ce que le mod apporte vraiment
 Une fois le monde réellement affiché, j'ai refait la mesure proprement : serveur local 1.21.8,
 72 000 blocs posés, 162 entités, chunks maintenus chargés, joueur vivant, trois répétitions.
 
@@ -131,8 +100,66 @@ ton PC ou ton téléphone, ce sera bien plus. Le rapport entre les deux colonnes
 et lui-même peut différer sur du vrai matériel, où c'est la carte graphique qui limite et non le
 processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffrée.
 
-## Ce que j'ai testé pour de vrai
+## Tâches terminées
+**Client Minecraft navigateur** (`minecraft-navigateur/`)
+- Page `/diagnostic` : huit tests (relais, serveur DonutSMP, WebGL 2, WebAssembly, appareil, état
+  du mod, plein écran, accès Internet), verdict clair et rapport copiable.
+- Section « Ton relais » : saisir l'adresse de ton relais Render, mesurer sa latence, l'enregistrer
+  comme relais par défaut, ou revenir au relais public.
+- Bandeau d'aide en français quand le client échoue (relais en panne, compte Microsoft, version
+  refusée, connexion coupée) ou quand le chargement dépasse 45 secondes.
+- Écran d'explication quand le navigateur refuse le stockage local : avant, le client s'arrêtait
+  sur une page vide sans un mot.
+- Mod v8 : connexion en 1.21.8 (le correctif le plus important, décrit en tête de ce rapport),
+  réglages à risque retirés, mode `?safe=1` pour isoler une panne, cookies concurrents nettoyés.
 
+**CubeCraft Web** (`minecraft-web/`)
+- Plein écran partout (accueil, menus, jeu), PC et mobile, avec la touche Échap qui ouvre le menu
+  du jeu au lieu de sortir, et verrouillage en paysage sur mobile.
+- Qualité automatique à deux niveaux : la résolution s'ajuste aux FPS, puis la distance de rendu
+  descend jusqu'à 2 et remonte quand ça respire.
+- Déploiement ramené de six projets Vercel à un seul.
+
+**Installateurs Fabric** (`minecraft-fabric/`)
+- Chaque mod vérifié par sa somme SHA-1 : un fichier corrompu est rejeté au lieu de faire planter
+  le jeu au lancement.
+- Options `--version latest` (dernière version suivie par Sodium, aujourd'hui 26.2) et `--ram`.
+- Récapitulatif final, arrêt explicite si Fabric API ou Sodium manque, messages d'erreur clairs.
+
+**Outil de planning** (`index.html`) — deux vrais défauts corrigés
+- Un shift pouvait être enregistré **sans collaborateur**. Il n'apparaissait dans aucune ligne de
+  la grille, mais ses heures et son coût étaient bien additionnés : les totaux affichés devenaient
+  faux sans que rien ne le signale. La saisie est maintenant refusée avec un message.
+- Le bouton « AJOUTER » d'un employé ne faisait rien, sans explication, quand le nom ou les heures
+  de contrat manquaient. Chaque champ manquant est désormais nommé.
+
+**Vérifications rejouables**
+- `minecraft-navigateur/site` : `npm test` → 16 contrôles.
+- `minecraft-web` : `npm test` → moteur du jeu, plus cohérence des scripts du site et garde-fous
+  sur le plein écran et la distance adaptative. J'ai vérifié que retirer un script fait bien
+  échouer la suite.
+
+**Outil de planning, en fin de session**
+
+- **L'outil de planning ne dépend plus du réseau pour s'afficher.** Une feuille de style de repli
+  est intégrée à la page : inactive tant que le CDN répond, activée automatiquement sinon. Testée
+  dans les trois cas (CDN rapide, absent, lent arrivant après coup), sans conflit ni régression.
+  Concrètement : la page reste lisible et utilisable même sans connexion en salle.
+
+## La vérification qui compte : un vrai serveur Minecraft
+J'ai fini par monter un **serveur Minecraft Java 1.21.11 officiel** sur cette machine, avec le
+relais WebSocket, et j'ai connecté le client web dessus. Ce n'est plus une simulation : c'est la
+chaîne complète, navigateur → mod → client → relais → serveur.
+
+- Entrée en jeu confirmée : pseudo, barre de vie, barre d'action. **Attention** : ces premiers
+  essais étaient en 1.21.11, où le monde ne s'affiche jamais. Tout a été refait en 1.21.8, avec le
+  monde réellement affiché.
+- **Le mod fonctionne en conditions réelles** : « 14 FPS : distance de rendu → 3 », puis
+  « 59 FPS : distance de rendu → 4 ». Il descend quand ça rame et remonte quand ça respire.
+- Le chat marche : message envoyé, relayé par le serveur, reçu et affiché.
+- Même chose en mode mobile tactile : réglages adaptés, connexion, boutons tactiles, en jeu.
+
+## Ce que j'ai testé pour de vrai
 | Vérification | Résultat |
 |---|---|
 | Client web connecté à un vrai serveur Minecraft, via le relais | en jeu, mod actif |
@@ -156,7 +183,6 @@ processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffr
 | Diagnostic hors ligne | verdict correct, aucune erreur |
 
 ## Ce que je n'ai pas pu vérifier
-
 - **Une partie réelle sur DonutSMP.** Le serveur de test est local : je n'ai pas de route réseau
   vers DonutSMP depuis cette machine. Ce qui dépend de DonutSMP lui-même (file d'attente, anticheat
   face à un relais, charge du serveur aux heures de pointe) reste à confirmer par toi.
@@ -169,7 +195,6 @@ processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffr
   diagnostic est faite pour trancher en trente secondes.
 
 ## Une revue de code a trouvé un défaut grave dans mon propre travail
-
 En fin de session, j'ai fait relire tout le travail de la nuit par une revue indépendante, avec
 pour consigne de chercher les défauts plutôt que de valider. Elle a relevé 29 points. J'ai vérifié
 chacun avant de corriger, et l'un d'eux était sérieux. Le lendemain matin, en me méfiant de mes
@@ -203,7 +228,6 @@ fonctionnent bien, les deux relais renvoyant les en-têtes nécessaires. Je l'ai
 corriger à l'aveugle.
 
 ## Décisions prises à ta place
-
 1. **Déployer en production pendant la nuit.** Tu avais demandé le site sur Vercel et des
    améliorations pour cet après-midi. Je n'ai déployé que des versions passées par les tests, et
    Vercel garde les versions précédentes : un retour arrière se fait en un clic.
@@ -219,7 +243,6 @@ corriger à l'aveugle.
 Le détail est dans `DECISIONS.md`, et le déroulé complet dans `JOURNAL.md`.
 
 ## Ce qui t'attend
-
 **Rien de bloquant.** Le travail est commité et poussé sur la branche
 `claude/repo-cleanup-extract-zip-9cei1x`. Aucune pull request n'a été créée.
 
@@ -239,44 +262,9 @@ peux pas vérifier moi-même.
   `minecraft-navigateur/README.md`, et la page `/diagnostic` te permet de le tester puis de
   l'enregistrer.
 
-## Fait aussi, en fin de session
-
-- **L'outil de planning ne dépend plus du réseau pour s'afficher.** Une feuille de style de repli
-  est intégrée à la page : inactive tant que le CDN répond, activée automatiquement sinon. Testée
-  dans les trois cas (CDN rapide, absent, lent arrivant après coup), sans conflit ni régression.
-  Concrètement : la page reste lisible et utilisable même sans connexion en salle.
-
 ## Améliorations possibles, non faites
-
 - **Les données du planning restent dans un seul navigateur.** Pas de synchronisation entre ton
   téléphone et ton ordinateur, et vider les données du navigateur les efface. Un export ou une
   vraie synchronisation serait un chantier à part entière.
 - **Le mode « héberger une partie » de CubeCraft** (pair à pair) n'a pas été testé : il demande deux
   machines qui se joignent par Internet.
-
-## Ajouté après le rapport : le message quand le compte est refusé
-
-DonutSMP exige un compte Microsoft. J'ai reproduit ce refus sur mon serveur de test, et ce que
-voyait le joueur était indéfendable : un écran anglais annonçant « WebSocket connection closed with
-unknown reason », suivi des octets bruts du dernier paquet reçu. Rien qui aide, et un message qui
-oriente vers une panne réseau alors que le problème est le compte.
-
-Le mod affiche maintenant un bandeau en français dans ce cas précis, avec les trois causes
-possibles dans l'ordre de fréquence : compte Microsoft non connecté, serveur qui refuse les
-connexions relayées, serveur saturé. Il sait faire la différence entre « refusé à l'entrée » et
-« coupé en cours de partie », qui produisent le même message technique mais appellent des gestes
-opposés. Vérifié dans les deux sens : le bandeau apparaît sur le refus, et n'apparaît pas sur une
-partie normale.
-
-## Et si ça recommence : le jeu te le dira lui-même
-
-Le plus pénible dans cette panne n'était pas la panne, c'était le silence. J'ai donc ajouté un
-chien de garde : si tu es en jeu depuis plus de quarante secondes et qu'aucun morceau de terrain
-n'est affiché, un bandeau en français apparaît, nomme la cause probable et te donne le geste à
-faire. Vérifié sur deux serveurs réels, dans les deux sens : il apparaît sur la panne, il
-n'apparaît pas sur une partie normale.
-
-Au passage, une erreur de ma part que je préfère écrire noir sur blanc : j'avais d'abord conclu que
-les morceaux de terrain n'arrivaient pas. Faux. Ils arrivent tous, c'est l'affichage qui ne sait
-pas les construire. Ma première version du chien de garde comptait donc la mauvaise chose et
-n'aurait jamais rien signalé. Corrigée, et un contrôle automatique interdit désormais d'y revenir.
