@@ -106,6 +106,38 @@ chargée, c'est l'inverse qui joue : la distance baisse toute seule pour protég
 - **Les FPS réels.** La machine n'a pas de carte graphique : les mesures viennent d'un rendu
   logiciel, bien plus lent que ton matériel. Elles servent à comparer, pas à prédire.
 
+## Une revue de code a trouvé un défaut grave dans mon propre travail
+
+En fin de session, j'ai fait relire tout le travail de la nuit par une revue indépendante, avec
+pour consigne de chercher les défauts plutôt que de valider. Elle a relevé 29 points. J'ai vérifié
+chacun avant de corriger, et l'un d'eux était sérieux.
+
+**Le filet de sécurité de l'outil de planning était lui-même cassé.** En recopiant la mise en forme
+de repli, les règles d'impression étaient sorties de leur bloc. Résultat : le jour où le CDN
+n'aurait pas répondu, la page serait passée en fond blanc, zoomée à 70 %, avec la feuille de
+signatures ouverte en permanence. Pire que l'absence de mise en forme. C'est corrigé, le repli est
+régénéré proprement, et le script qui le fabrique ne peut plus commettre la même erreur.
+
+Autres corrections issues de cette relecture :
+- **Un PC à écran tactile était pris pour un téléphone** par le mod : distance de rendu divisée par
+  deux, interface géante, carte graphique dédiée refusée. Exactement l'inverse du but recherché.
+- **La souris n'était plus captée après une reprise de partie** dans CubeCraft, parce que le
+  verrouillage du pointeur était demandé pendant la transition vers le plein écran, ce que Chrome
+  refuse.
+- **Une pause plus longue que le shift** donnait une durée négative, ajoutée aux heures payées et
+  au coût. La saisie est refusée.
+- **Un nom de collaborateur contenant des chevrons** cassait le planning et le sélecteur de shift.
+  Les noms sont maintenant échappés partout où ils s'affichent.
+- **Le mode sans risque n'était pas complet** : il gardait la version imposée au serveur, et
+  pouvait donc innocenter le mod à tort.
+- **Le nettoyage des mods emportait un mod voisin** : réinstaller Sodium supprimait Sodium Extra.
+- La chaîne de déploiement n'utilise plus de shell, et un téléchargement incomplet ne peut plus
+  passer inaperçu.
+
+Un point signalé comme bloquant s'est révélé **infondé après vérification** : les tests de relais
+fonctionnent bien, les deux relais renvoyant les en-têtes nécessaires. Je l'ai mesuré plutôt que de
+corriger à l'aveugle.
+
 ## Décisions prises à ta place
 
 1. **Déployer en production pendant la nuit.** Tu avais demandé le site sur Vercel et des
@@ -118,7 +150,7 @@ chargée, c'est l'inverse qui joue : la distance baisse toute seule pour protég
 4. **Versionner ce compte rendu** dans le dépôt : le conteneur est éphémère, un fichier non commité
    aurait disparu.
 
-Le détail est dans `DECISIONS.md`.
+Le détail est dans `DECISIONS.md`, et le déroulé complet dans `JOURNAL.md`.
 
 ## Ce qui t'attend
 
