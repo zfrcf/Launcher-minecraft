@@ -21,8 +21,13 @@ payées et du coût estimé, feuille d'émargement imprimable.
 
 Les données (employés, plannings) sont enregistrées **dans le navigateur** de la machine utilisée.
 Elles ne partent nulle part, mais ne se synchronisent pas non plus entre deux appareils : vider les
-données du navigateur les efface. La page charge sa mise en forme depuis un CDN, donc un premier
-affichage demande une connexion.
+données du navigateur les efface.
+
+La mise en forme vient normalement d'un CDN. Si celui-ci est injoignable (wifi de salle capricieux,
+réseau qui filtre), une **feuille de repli intégrée** prend le relais automatiquement : la page reste
+lisible et utilisable, sans connexion. Pour la regénérer après une refonte visuelle :
+`node .session-nuit/regenerer-styles-repli.js`, puis remplacer le contenu de la balise
+`<style id="repliTailwind">` dans `index.html`.
 
 ## 2. Minecraft sur PC avec les mods de performance (`minecraft-fabric/`)
 
