@@ -81,6 +81,11 @@ verifie('diagnostic.html annonce la même version que mod.js', versionDiag === v
 verifie('diagnostic.html signale une version que le client ne sait pas afficher',
   diag.includes('VERSIONS_AFFICHABLES') && diag.includes('n’est pas affichable'));
 
+// Une partie solo n'utilise ni réseau, ni relais, ni compte : c'est le seul moyen simple de
+// séparer « mon appareil ne va pas » de « le serveur me refuse ».
+verifie('diagnostic.html propose un essai en solo',
+  diag.includes('singleplayer=1') && diag.includes('Essayer une partie solo'));
+
 verifie('diagnostic.html permet de tester et mémoriser un relais personnel',
   ["id=\"relaisTester\"", "id=\"relaisUtiliser\"", "id=\"relaisPublic\"", "proxiesData"].every((t) => diag.includes(t)));
 
