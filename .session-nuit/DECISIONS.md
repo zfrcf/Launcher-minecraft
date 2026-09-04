@@ -94,3 +94,21 @@ quelque chose ne va pas ; servie depuis le cache, une correction resterait invis
 
 **Le vrai remède reste à ta main** : relier le dépôt à Vercel, pour que chaque `git push`
 reconstruise tout seul. C'est dans « Ce qui t'attend ».
+
+## D10 — Le mode sans risque garde la version, il ne retire que les réglages
+
+**Contexte.** `?safe=1` effaçait la version imposée et le compte Microsoft de l'entrée DonutSMP, en
+plus des réglages de performance. La raison d'origine était bonne au moment où la version imposée
+était 1.21.11 : garder un réglage suspect aurait innocenté le mod à tort.
+
+**Ce que la mesure a montré.** Sans version imposée, le client négocie avec le serveur et retient la
+plus récente qu'il sait *parler*. Contre un serveur récent, il retient 1.21.11, qu'il ne sait pas
+*afficher*. Le mode « sans risque » provoquait donc lui-même l'écran vide qu'il sert à écarter, et
+retirait le compte Microsoft dont DonutSMP a besoin pour accepter la connexion.
+
+**Choix.** `?safe=1` ne touche plus qu'aux réglages de performance, au plein écran et à la distance
+adaptative. La version affichable et le compte Microsoft sont conservés : ce ne sont pas des
+réglages à risque, ce sont les conditions pour que la connexion aboutisse.
+
+**Ce qu'on perd.** Le mode sans risque ne permet plus d'écarter la version comme cause. La page de
+diagnostic le fait à sa place, en signalant en rouge une entrée sur une version non affichable.

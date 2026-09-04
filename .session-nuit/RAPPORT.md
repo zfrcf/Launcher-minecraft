@@ -220,8 +220,10 @@ Autres corrections issues de cette relecture :
   au coût. La saisie est refusée.
 - **Un nom de collaborateur contenant des chevrons** cassait le planning et le sélecteur de shift.
   Les noms sont maintenant échappés partout où ils s'affichent.
-- **Le mode sans risque n'était pas complet** : il gardait la version imposée au serveur, et
-  pouvait donc innocenter le mod à tort.
+- **Le mode sans risque a changé deux fois de comportement**, et la deuxième fois compte : il
+  effaçait la version imposée, si bien que le client négociait tout seul une version qu'il ne sait
+  pas afficher. Le mode « sans risque » provoquait donc lui-même l'écran vide qu'il sert à écarter.
+  Il ne retire plus que les réglages de performance.
 - **Le nettoyage des mods emportait un mod voisin** : réinstaller Sodium supprimait Sodium Extra.
 - La chaîne de déploiement n'utilise plus de shell, et un téléchargement incomplet ne peut plus
   passer inaperçu.

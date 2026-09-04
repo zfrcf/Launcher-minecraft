@@ -168,3 +168,17 @@
 - Vérification dans un vrai navigateur, sur la copie servie par Vercel : joueur neuf en 1.21.8,
   joueur venu hier en 1.21.11 corrigé automatiquement, page de diagnostic qui signale en rouge une
   version non affichable, bouton d'essai en solo présent. → OK
+
+## 13 h 10 – 13 h 40 — Le mode sans risque causait la panne qu'il devait écarter
+
+- Question posée en relisant : maintenant que la version imposée est le correctif, qu'arrive-t-il
+  quand `?safe=1` l'efface ?
+- Mesuré sur deux serveurs : sans version imposée, le client négocie et retient la plus récente
+  qu'il sait parler. Contre le serveur 1.21.8, il retient 1.21.8 et tout va bien. Contre le serveur
+  1.21.11, il retient 1.21.11 et l'écran reste vide. Le mode sans risque reproduisait donc la panne.
+  → défaut réel, trouvé avant qu'il ne serve
+- Corrigé : `?safe=1` ne retire plus que les réglages de performance ; la version affichable et le
+  compte Microsoft restent. Décision D10.
+- Revérifié sur les deux serveurs : l'entrée DonutSMP garde 1.21.8 après un passage en mode sans
+  risque. → OK
+- `test.js` : 32 contrôles, dont deux qui interdisent le retour en arrière.
