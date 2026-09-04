@@ -38,16 +38,21 @@ adresse `wss://…/ws` dans le jeu ou dans la variable `WS_URL` de Vercel.
 
 ## Version en ligne (Vercel)
 
-Le jeu est déployé sur **<https://cubecraft-web.vercel.app>** (projet Vercel `cubecraft-web`).
-Le dépôt GitHub n'étant pas relié à Vercel, le déploiement a été fait par envoi direct des fichiers :
-la page principale (`index.html`, CSS, fonction `api/config`) est sur le projet `cubecraft-web`, et les
-scripts du jeu sont servis par cinq petits projets d'assets `cubecraft-web-js1` … `cubecraft-web-js5`
-(voir le chargeur en bas de `public/index.html` version Vercel). Les bibliothèques (three.js, PeerJS, MSAL)
-viennent des CDN.
+Le jeu est déployé sur **<https://cubecraft-web.vercel.app>** (projet Vercel `cubecraft-web`),
+sur un **seul projet**. Le déploiement n'envoie que quatre petits fichiers (`build.js`,
+`package.json`, `vercel.json`, `api/config.js`) ; au moment du build, `build.js` récupère
+`public/` complet depuis ce dépôt GitHub (archive de la branche). Le site servi est donc
+exactement ce qui est commité, sans liste de fichiers à maintenir.
 
-Pour un déploiement plus simple à l'avenir : installer l'application GitHub de Vercel sur le dépôt
+> Auparavant le jeu était éclaté sur six projets (`cubecraft-web` + `cubecraft-web-js1` …
+> `cubecraft-web-js5`) parce que l'envoi direct des fichiers plafonnait en taille, avec une
+> correspondance fichier → projet écrite à la main dans `index.html`. Ces cinq projets d'assets
+> ne servent plus à rien et peuvent être supprimés depuis le tableau de bord Vercel.
+
+Encore plus simple à l'avenir : installer l'application GitHub de Vercel sur le dépôt
 (<https://vercel.com/new>), importer le dépôt avec **Root Directory = `minecraft-web`**, et chaque
-`git push` redéploiera automatiquement.
+`git push` redéploiera automatiquement (le `build.js` se comporte alors en mode local et ne
+télécharge rien).
 
 ## Lancer en local
 
