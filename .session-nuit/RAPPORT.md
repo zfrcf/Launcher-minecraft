@@ -267,3 +267,16 @@ connexions relayées, serveur saturé. Il sait faire la différence entre « ref
 « coupé en cours de partie », qui produisent le même message technique mais appellent des gestes
 opposés. Vérifié dans les deux sens : le bandeau apparaît sur le refus, et n'apparaît pas sur une
 partie normale.
+
+## Et si ça recommence : le jeu te le dira lui-même
+
+Le plus pénible dans cette panne n'était pas la panne, c'était le silence. J'ai donc ajouté un
+chien de garde : si tu es en jeu depuis plus de quarante secondes et qu'aucun morceau de terrain
+n'est affiché, un bandeau en français apparaît, nomme la cause probable et te donne le geste à
+faire. Vérifié sur deux serveurs réels, dans les deux sens : il apparaît sur la panne, il
+n'apparaît pas sur une partie normale.
+
+Au passage, une erreur de ma part que je préfère écrire noir sur blanc : j'avais d'abord conclu que
+les morceaux de terrain n'arrivaient pas. Faux. Ils arrivent tous, c'est l'affichage qui ne sait
+pas les construire. Ma première version du chien de garde comptait donc la mauvaise chose et
+n'aurait jamais rien signalé. Corrigée, et un contrôle automatique interdit désormais d'y revenir.

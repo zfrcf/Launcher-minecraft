@@ -92,3 +92,15 @@
 - Contre-épreuve : partie normale sur le même serveur, en jeu, vie 20, 81 colonnes de chunks,
   **aucun bandeau**. Pas de faux avertissement. → OK
 - `test.js` : 23 contrôles.
+
+## 09 h 40 – 10 h 20 — Un bandeau pour la panne elle-même
+
+- Ajout d'un chien de garde : en jeu depuis plus de 40 secondes sans qu'un seul morceau de terrain
+  soit affiché → bandeau en français nommant la cause (la version) et le geste à faire.
+- Première version fausse : elle comptait les morceaux **reçus par le réseau**, qui arrivent très
+  bien même quand rien ne s'affiche (213 en 1.21.11). Elle n'aurait jamais rien signalé. Refaite
+  sur l'indicateur d'affichage du client, celui que le joueur a sous les yeux. → OK
+- Vérifié dans les deux sens sur deux vrais serveurs, en 1.21.11 et en 1.21.8 : bandeau présent sur
+  la panne (« en jeu depuis 41 s, aucun morceau de terrain affiché »), absent sur la partie saine.
+- `test.js` : 25 contrôles, dont un qui interdit de revenir au mauvais signal.
+- Documents corrigés partout où j'avais écrit « 0 chunk reçu ».
