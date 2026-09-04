@@ -18,24 +18,38 @@
 
     active() { return !!(document.fullscreenElement || document.webkitFullscreenElement); },
 
+    // Renvoie une promesse résolue quand le passage en plein écran est terminé (ou abandonné) :
+    // Chrome refuse un verrouillage du pointeur pendant la transition, il faut donc l'attendre.
     enter() {
-      if (!this.supported || this.busy || this.active()) return;
+      if (!this.supported || this.busy || this.active()) return Promise.resolve();
       this.busy = true;
       const done = () => { this.busy = false; };
       try {
         const p = request.call(el, { navigationUI: 'hide' });
-        if (p && p.then) p.then(done, done); else done();
+        if (p && p.then) return p.then(done, done);
+        done();
       } catch (e) { done(); }
+      return Promise.resolve();
     },
 
+    // Ces deux verrous échouent de bien des façons selon le navigateur, parfois en levant tout de
+    // suite plutôt qu'en rejetant une promesse : le try/catch est nécessaire en plus du .catch,
+    // sinon l'exception empêche l'appel suivant.
     lockEscape() {
       if (!this.active() || !navigator.keyboard || !navigator.keyboard.lock) return;
-      navigator.keyboard.lock(['Escape']).catch(() => { /* non supporté : Échap quitte le plein écran */ });
+      try {
+        const p = navigator.keyboard.lock(['Escape']);
+        if (p && p.catch) p.catch(() => { /* non supporté : Échap quitte le plein écran */ });
+      } catch (e) { /* ignoré */ }
     },
 
     lockLandscape() {
       if (!this.active() || !(MC.Touch && MC.Touch.detect())) return;
-      if (screen.orientation && screen.orientation.lock) screen.orientation.lock('landscape').catch(() => { /* refusé : on garde l'orientation courante */ });
+      if (!screen.orientation || !screen.orientation.lock) return;
+      try {
+        const p = screen.orientation.lock('landscape');
+        if (p && p.catch) p.catch(() => { /* refusé : on garde l'orientation courante */ });
+      } catch (e) { /* ignoré */ }
     },
 
     init() {
@@ -44,7 +58,11 @@
       // Seuls ces évènements comptent comme une activation de l'utilisateur (pointerdown tactile non).
       ['pointerup', 'touchend', 'click'].forEach((ev) => document.addEventListener(ev, ask, { capture: true, passive: true }));
       document.addEventListener('keydown', (e) => { if (e.key !== 'Escape') ask(); }, { capture: true, passive: true });
-      document.addEventListener('fullscreenchange', () => { if (this.active()) { this.lockEscape(); this.lockLandscape(); } });
+      // WebKit n'émet que l'évènement préfixé : sans lui, le verrouillage en paysage ne se
+      // déclencherait jamais sur les appareils tactiles où il sert le plus.
+      const surChangement = () => { if (this.active()) { this.lockEscape(); this.lockLandscape(); } };
+      document.addEventListener('fullscreenchange', surChangement);
+      document.addEventListener('webkitfullscreenchange', surChangement);
     }
   };
 

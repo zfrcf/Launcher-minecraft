@@ -104,11 +104,9 @@
   var t0 = performance.now();
   withTimeout(fetch(PROXY + '/api/vm/net/connect', { cache: 'no-store' }), 10000).then(function (r) {
     var ms = Math.round(performance.now() - t0);
-    set('web', 'ok', 'La page joint Internet.');
     if (r.ok) set('relay', ms > 1500 ? 'warn' : 'ok', 'Répond en ' + ms + ' ms.', ms > 1500 ? 'Relais lent : saccades possibles. Un relais à toi sur Render (dossier minecraft-navigateur) sera plus réactif.' : '');
     else set('relay', 'ko', 'Réponse HTTP ' + r.status + '.', 'Le relais public a un problème. Réessaie dans quelques minutes ou héberge ton relais (README).');
   }).catch(function (e) {
-    set('web', 'warn', 'Impossible de joindre le relais : ' + e.message);
     set('relay', 'ko', 'Injoignable : ' + e.message, 'Sans relais, aucune connexion possible. Vérifie ta connexion, un bloqueur de pub, un pare-feu ou un réseau d’entreprise / école qui filtre.');
   });
 
@@ -119,7 +117,11 @@
     var players = d.players ? d.players.online + ' joueurs' : '';
     var okVersion = /1\.7|1\.8|1\.21|26\./.test(v);
     set('server', okVersion ? 'ok' : 'warn', 'En ligne · ' + v + ' · ' + players, okVersion ? '' : 'Le serveur annonce une plage de versions inattendue ; le client se connecte en ' + CLIENT_VERSION + '.');
-  }).catch(function (e) { set('server', 'warn', 'Statut indisponible : ' + e.message, 'L’API de statut ne répond pas ; ce n’est pas bloquant pour jouer.'); });
+    set('web', 'ok', 'La page joint Internet.');
+  }).catch(function (e) {
+    set('server', 'warn', 'Statut indisponible : ' + e.message, 'L’API de statut ne répond pas ; ce n’est pas bloquant pour jouer.');
+    set('web', 'warn', 'Aucune réponse de l’extérieur : connexion coupée, ou filtrage réseau.');
+  });
 
   // ---- WebGL
   try {
@@ -139,7 +141,9 @@
 
   // ---- Appareil
   var cores = navigator.hardwareConcurrency || 0, mem = navigator.deviceMemory || 0;
-  var touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
+  // Même règle que le mod : un PC à dalle tactile n'est pas un téléphone.
+  var mq = function (q) { return !!(window.matchMedia && window.matchMedia(q).matches); };
+  var touch = navigator.maxTouchPoints > 0 && mq('(pointer: coarse)') && !mq('(hover: hover)');
   var low = (cores && cores <= 4) || (mem && mem <= 4);
   set('device', low ? 'warn' : 'ok', (cores ? cores + ' cœurs' : 'cœurs inconnus') + ' · ' + (mem ? mem + ' Go mémoire (valeur plafonnée par le navigateur)' : 'mémoire inconnue') + ' · ' + (touch ? 'écran tactile' : 'PC') + ' · ' + screen.width + '×' + screen.height,
     low ? 'Appareil modeste : le mod démarre avec une distance de rendu réduite et l’ajuste selon les FPS.' : '');
@@ -163,7 +167,17 @@
   // ---- Relais personnel : test de latence et mémorisation
   // Le client lit d'abord le paramètre d'URL ?proxy=, puis proxiesData.selected dans le stockage
   // local. On écrit donc proxiesData pour que le choix tienne d'un chargement à l'autre.
-  function ecrire(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); return true; } catch (e) { return false; } }
+  // Le client lit ces clés en cookie avant le stockage local : sans effacer le cookie, le choix
+  // de relais resterait sans effet alors que la page annonce « enregistré ».
+  function effacerCookie(k) {
+    try {
+      var dom = location.hostname.split('.').slice(-2).join('.');
+      var exp = '=; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = k + exp;
+      document.cookie = k + exp + '; Domain=.' + dom;
+    } catch (e) {}
+  }
+  function ecrire(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); effacerCookie(k); return true; } catch (e) { return false; } }
   function relaisActuel() {
     var p = read('proxiesData');
     return (p && p.selected) || PROXY;

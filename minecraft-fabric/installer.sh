@@ -12,17 +12,44 @@ SHADERS=0
 NOPROFILE=0
 RAM=4
 MC_DIR=""
+
+aide() {
+  cat <<'AIDE'
+Installe Fabric et les mods de performance pour Minecraft Java (macOS / Linux).
+
+  bash installer.sh [options]
+
+  --version 1.21.11   version de Minecraft a installer
+  --version latest    derniere version suivie par Sodium
+  --ram 8             memoire allouee au jeu, en Go (4 par defaut)
+  --shaders           ajoute Iris (shaders compatibles Sodium)
+  --dir DOSSIER       autre dossier .minecraft
+  --no-profile        n'ajoute pas de profil au launcher
+
+Chaque mod telecharge est verifie par sa somme SHA-1 publiee par Modrinth.
+AIDE
+}
+
+besoin_valeur() {   # besoin_valeur <option> <nb args restants>
+  if [ "$2" -lt 2 ]; then echo "L'option $1 attend une valeur."; EXPLIQUE=1; exit 1; fi
+}
 while [ $# -gt 0 ]; do
   case "$1" in
-    --version) VERSION="$2"; shift 2 ;;
+    --version) besoin_valeur "$1" $#; VERSION="$2"; shift 2 ;;
     --shaders) SHADERS=1; shift ;;
-    --dir) MC_DIR="$2"; shift 2 ;;
+    --dir) besoin_valeur "$1" $#; MC_DIR="$2"; shift 2 ;;
     --no-profile) NOPROFILE=1; shift ;;
-    --ram) RAM="$2"; shift 2 ;;
-    -h|--help) sed -n '2,7p' "$0"; exit 0 ;;
-    *) echo "Option inconnue : $1 (voir --help)"; exit 1 ;;
+    --ram) besoin_valeur "$1" $#; RAM="$2"; shift 2 ;;
+    -h|--help) aide; exit 0 ;;
+    *) echo "Option inconnue : $1 (voir --help)"; EXPLIQUE=1; exit 1 ;;
   esac
 done
+
+# Defaut 18 : --ram doit etre un entier, sinon le profil du launcher devient inutilisable
+# (-Xmx4gG) sans que rien ne le signale.
+case "$RAM" in
+  ''|*[!0-9]*) echo "--ram attend un nombre entier de Go (exemple : --ram 8)."; EXPLIQUE=1; exit 1 ;;
+esac
 
 # Message utile si le script s'arrete sur une erreur non rattrapee (reseau coupe, disque plein).
 EXPLIQUE=0   # passe a 1 quand le script a deja dit precisement ce qui n'allait pas
@@ -52,8 +79,10 @@ get() { curl -fsSL --retry 3 --retry-delay 2 --connect-timeout 20 -A "$UA" "$@";
 sha1_of() {
   if command -v sha1sum >/dev/null 2>&1; then sha1sum "$1" | cut -d' ' -f1
   elif command -v shasum >/dev/null 2>&1; then shasum -a 1 "$1" | cut -d' ' -f1
+  elif command -v python3 >/dev/null 2>&1; then python3 -c "import hashlib,sys;print(hashlib.sha1(open(sys.argv[1],'rb').read()).hexdigest())" "$1"
   else echo ""; fi
 }
+SOMMES_VERIFIEES=1   # passe a 0 si aucun outil de somme de controle n'est disponible
 compact() { tr -d '\n\r\t '; }   # aplatit un JSON indenté pour le parser avec grep
 json_first() { # json_first '<clé>' : première valeur chaîne de la clé dans stdin
   grep -o "\"$1\":\"[^\"]*\"" | head -1 | sed -E 's/^"[^"]*":"//; s/"$//'
@@ -122,9 +151,28 @@ ESSENTIELS="fabric-api sodium"
 INSTALLES=""; IGNORES=""; ECHECS=""
 for slug in $MODS; do
   resp="$(get "https://api.modrinth.com/v2/project/$slug/version?game_versions=$ENC_V&loaders=%5B%22fabric%22%5D" 2>/dev/null | compact || true)"
-  url="$(printf '%s' "$resp" | grep -o '"url":"https://cdn.modrinth.com/[^"]*\.jar"' | head -1 | sed -E 's/^"url":"//; s/"$//')"
-  file="$(printf '%s' "$resp" | grep -o '"filename":"[^"]*\.jar"' | head -1 | sed -E 's/^"filename":"//; s/"$//')"
-  want="$(printf '%s' "$resp" | grep -o '"sha1":"[0-9a-f]\{40\}"' | head -1 | sed -E 's/^"sha1":"//; s/"$//')"
+  # On lit l'URL, le nom et la somme du MEME fichier (le .jar principal de la premiere version) :
+  # les prendre separement dans le JSON les desynchronise des qu'une version publie un autre
+  # fichier en premier, et la verification rejetterait alors un mod parfaitement sain.
+  if command -v python3 >/dev/null 2>&1; then
+    triplet="$(printf '%s' "$resp" | python3 -c "
+import json,sys
+try: v=json.load(sys.stdin)
+except Exception: sys.exit(0)
+if not v: sys.exit(0)
+fs=v[0].get('files') or []
+f=next((x for x in fs if x.get('primary')), fs[0] if fs else None)
+if not f: sys.exit(0)
+print('\t'.join([f.get('url',''), f.get('filename',''), (f.get('hashes') or {}).get('sha1','')]))
+" 2>/dev/null)"
+    url="$(printf '%s' "$triplet" | cut -f1)"
+    file="$(printf '%s' "$triplet" | cut -f2)"
+    want="$(printf '%s' "$triplet" | cut -f3)"
+  else
+    url="$(printf '%s' "$resp" | grep -o '"url":"https://cdn.modrinth.com/[^"]*\.jar"' | head -1 | sed -E 's/^"url":"//; s/"$//')"
+    file="$(printf '%s' "$resp" | grep -o '"filename":"[^"]*\.jar"' | head -1 | sed -E 's/^"filename":"//; s/"$//')"
+    want=""   # sans python3 on ne peut pas relier la somme au bon fichier : on ne compare pas
+  fi
   if [ -z "$url" ]; then
     echo "   - $slug : pas de version pour $VERSION, ignoré"
     IGNORES="$IGNORES $slug"
@@ -137,6 +185,7 @@ for slug in $MODS; do
   fi
   # Verification : somme SHA-1 annoncee par Modrinth ; a defaut, au moins une archive .jar valide.
   got="$(sha1_of "$tmpjar")"
+  [ -z "$got" ] && SOMMES_VERIFIEES=0
   if [ -n "$want" ] && [ -n "$got" ] && [ "$want" != "$got" ]; then
     echo "   ! $slug : fichier corrompu (somme de contrôle différente), non installé"
     rm -f "$tmpjar"; ECHECS="$ECHECS $slug"; continue
@@ -145,8 +194,19 @@ for slug in $MODS; do
     echo "   ! $slug : le fichier reçu n'est pas un mod valide, non installé"
     rm -f "$tmpjar"; ECHECS="$ECHECS $slug"; continue
   fi
-  # supprime les anciennes versions du même mod, puis met en place le fichier vérifié
-  rm -f "$MC_DIR/mods/${slug}"*.jar 2>/dev/null || true
+  # Supprime les anciennes versions de CE mod uniquement. Un simple motif « sodium* » emporterait
+  # aussi « sodium-extra » : on epargne donc tout fichier dont le nom commence par un autre slug
+  # de la liste.
+  for ancien in "$MC_DIR/mods/${slug}"*.jar; do
+    [ -e "$ancien" ] || continue
+    base="$(basename "$ancien")"
+    garder=0
+    for autre in $MODS; do
+      [ "$autre" = "$slug" ] && continue
+      case "$base" in "$autre"*) garder=1; break ;; esac
+    done
+    [ "$garder" = "0" ] && rm -f "$ancien"
+  done
   mv "$tmpjar" "$MC_DIR/mods/$file"
   echo "   + $file"
   INSTALLES="$INSTALLES $slug"
@@ -177,6 +237,7 @@ fi
 echo ""
 echo "== Récapitulatif"
 echo "   installés :$INSTALLES"
+[ "$SOMMES_VERIFIEES" = "0" ] && echo "   (sommes de controle non verifiees : ni sha1sum, ni shasum, ni python3 sur cette machine)" || true
 [ -n "$IGNORES" ] && echo "   sans version pour $VERSION :$IGNORES" || true
 [ -n "$ECHECS" ] && echo "   échecs (relance le script) :$ECHECS" || true
 if [ -n "$MANQUE_ESSENTIEL" ]; then

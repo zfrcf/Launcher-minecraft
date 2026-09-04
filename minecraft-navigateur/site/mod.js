@@ -27,7 +27,11 @@
   var SEED_VERSION = 6;
   var MARK = 'mwcSeedVersion';
   var q = location.search;
-  var isTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
+  // Un PC à dalle tactile a maxTouchPoints > 0 tout en ayant une souris : le prendre pour un
+  // téléphone lui imposerait une distance de rendu deux fois plus courte et une interface géante.
+  // On considère « tactile » un appareil sans survol possible et à pointeur grossier.
+  function mq(q) { return !!(window.matchMedia && window.matchMedia(q).matches); }
+  var isTouch = navigator.maxTouchPoints > 0 && mq('(pointer: coarse)') && !mq('(hover: hover)');
   var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
   var cores = navigator.hardwareConcurrency || 4;
   var memory = navigator.deviceMemory || 4;
@@ -103,8 +107,20 @@
       var clean = read('changedSettings') || {};
       KEYS.forEach(function (k) { delete clean[k]; });
       write('changedSettings', clean);
+      // L'entrée DonutSMP écrite par le mod doit partir aussi : si la panne vient du choix de
+      // version imposé, la garder ferait conclure à tort que le mod n'y est pour rien.
+      var l = read('serversList');
+      if (Array.isArray(l)) {
+        for (var j = 0; j < l.length; j++) {
+          if (l[j] && String(l[j].ip).indexOf('donutsmp.net') === 0) {
+            delete l[j].versionOverride;
+            delete l[j].authenticatedAccountOverride;
+          }
+        }
+        write('serversList', l);
+      }
       localStorage.removeItem(MARK);
-      console.info(TAG, 'mode sans risque : réglages du mod retirés, plein écran et FPS adaptatif désactivés');
+      console.info(TAG, 'mode sans risque : réglages du mod retirés (y compris la version imposée), plein écran et FPS adaptatif désactivés');
     } catch (e) {}
     return;
   }
@@ -178,6 +194,10 @@
 
   if (fsEnabled && reqFS) {
     // Le client ne doit plus pouvoir sortir du plein écran (il le fait dans certains menus).
+    // La vraie fonction est conservée : ?fullscreen=0 la rétablit, et un dépannage reste possible
+    // depuis la console avec document.__sortiePleinEcranReelle.call(document).
+    var vraieSortie = document.exitFullscreen || document.webkitExitFullscreen;
+    if (vraieSortie) document.__sortiePleinEcranReelle = vraieSortie;
     var noop = function () { return Promise.resolve(); };
     try { document.exitFullscreen = noop; } catch (e) {}
     try { document.webkitExitFullscreen = noop; } catch (e) {}
@@ -229,12 +249,15 @@
     if (!opts) return;
     var frames = 0, t0 = performance.now(), lastChange = 0, goodStreak = 0;
     var el = null;
-    if (hud === null) {
+    if (hud === null && document.body) {
       el = document.createElement('div');
       el.setAttribute('style', 'position:fixed;top:4px;left:4px;z-index:2147483646;background:rgba(0,0,0,.55);color:#0f0;font:12px monospace;padding:2px 6px;border-radius:4px;pointer-events:none');
       document.body.appendChild(el);
     }
     function tick(now) {
+      requestAnimationFrame(tick);   // replanifié d'abord : une erreur ci-dessous ne doit pas
+                                     // arrêter la boucle pour le reste de la partie
+      try {
       frames++;
       var dt = now - t0;
       if (dt >= WINDOW_MS) {
@@ -256,7 +279,7 @@
         surveillerCoupure();
         if (el) el.textContent = fps + ' FPS · rendu ' + (opts.renderDistance) + ' · ' + tier;
       }
-      requestAnimationFrame(tick);
+      } catch (e) { if (!tick.__prevenu) { tick.__prevenu = true; console.warn(TAG, 'réglage automatique en difficulté :', e); } }
     }
     requestAnimationFrame(tick);
     console.info(TAG, 'FPS adaptatif actif : rendu entre', RD_MIN, 'et', RD_MAX);
@@ -348,7 +371,8 @@
   var tries = 0, gotOptions = false, gotStatus = false;
   var wait = setInterval(function () {
     if (!gotOptions && window.options) { gotOptions = true; governor(); }
-    if (!gotStatus && hookStatus()) gotStatus = true;
-    if ((gotOptions && gotStatus) || ++tries > 600) clearInterval(wait);   // 60 s : client non chargé
+    // hookStatus() se remet en place tout seul si le client remplace la fonction entre-temps.
+    hookStatus();
+    if (++tries > 600) clearInterval(wait);   // 60 s : au-delà, le client ne se chargera plus
   }, 100);
 })();

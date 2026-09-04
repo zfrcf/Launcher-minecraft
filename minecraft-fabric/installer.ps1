@@ -32,7 +32,9 @@ function Get-File($url, $out) { Invoke-WebRequest -Uri $url -Headers @{ "User-Ag
 if ($Version -eq "latest") {
   Write-Host "== Recherche de la dernière version compatible Fabric + Sodium"
   $encL0 = [Uri]::EscapeDataString("[`"fabric`"]")
-  foreach ($g in (Get-Json "https://meta.fabricmc.net/v2/versions/game" | Where-Object { $_.stable } | Select-Object -First 12)) {
+  try { $versionsJeu = Get-Json "https://meta.fabricmc.net/v2/versions/game" }
+  catch { throw "Impossible de joindre le service de versions de Fabric. Verifie ta connexion, ou lance avec -Version 1.21.11" }
+  foreach ($g in ($versionsJeu | Where-Object { $_.stable } | Select-Object -First 12)) {
     $encV0 = [Uri]::EscapeDataString("[`"$($g.version)`"]")
     try { $probe = Get-Json "https://api.modrinth.com/v2/project/sodium/version?game_versions=$encV0&loaders=$encL0" } catch { $probe = @() }
     if ($probe -and $probe.Count -gt 0) { $Version = $g.version; Write-Host "   version retenue : $Version"; break }
@@ -118,11 +120,27 @@ foreach ($slug in $mods) {
     Write-Host "   ! $slug : fichier corrompu (somme de contrôle différente), non installé"
     Remove-Item -Force $tmp; $echecs += $slug; continue
   }
-  if ((Get-Item $tmp).Length -lt 1024) {
+  # Un .jar est une archive ZIP : ses deux premiers octets valent « PK ». Sans ce test, une page
+  # d'erreur HTML de quelques kilo-octets serait installée sous le nom du mod et ferait planter
+  # le jeu au lancement.
+  $entete = ''
+  try {
+    $flux = [IO.File]::OpenRead($tmp)
+    $deux = New-Object byte[] 2
+    [void]$flux.Read($deux, 0, 2)
+    $flux.Close()
+    $entete = [Text.Encoding]::ASCII.GetString($deux)
+  } catch { $entete = '' }
+  if ((Get-Item $tmp).Length -lt 1024 -or $entete -ne 'PK') {
     Write-Host "   ! $slug : le fichier reçu n'est pas un mod valide, non installé"
     Remove-Item -Force $tmp; $echecs += $slug; continue
   }
-  Get-ChildItem -Path $modsDir -Filter "$slug*.jar" -ErrorAction SilentlyContinue | Remove-Item -Force
+  # Supprime les anciennes versions de CE mod uniquement : un motif « sodium* » emporterait aussi
+  # « sodium-extra », on epargne donc les fichiers commencant par un autre slug de la liste.
+  Get-ChildItem -Path $modsDir -Filter "$slug*.jar" -ErrorAction SilentlyContinue | Where-Object {
+    $nom = $_.Name
+    -not ($mods | Where-Object { $_ -ne $slug -and $nom.StartsWith($_) })
+  } | Remove-Item -Force
   Move-Item -Force $tmp (Join-Path $modsDir $file.filename)
   Write-Host "   + $($file.filename)"
   $installes += $slug

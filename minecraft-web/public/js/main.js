@@ -610,7 +610,13 @@
     UI.showPause({ text: modeName + '\n' + players + ' joueur' + (players > 1 ? 's' : '') + ' en ligne · graine ' + G.world.seed, mode: G.player.mode, roomCode: G.net.mode === 'host' ? G.net.roomCode : '' });
     if (G.pointerLocked) { G.expectUnlock = true; document.exitPointerLock(); }
   }
-  function resume() { UI.hidePause(); if (MC.Fullscreen) MC.Fullscreen.enter(); requestLock(); }
+  function resume() {
+    UI.hidePause();
+    // Chrome annule un verrouillage du pointeur demandé pendant la transition vers le plein écran :
+    // sans cette attente, la souris n'est plus captée après une reprise et la visée ne répond plus.
+    if (MC.Fullscreen) { const p = MC.Fullscreen.enter(); if (p && p.then) { p.then(requestLock, requestLock); return; } }
+    requestLock();
+  }
   function toggleInventory() {
     if (UI.isPaused()) return;
     if (UI.isInventoryOpen()) closeInventory(); else openInventory();
@@ -755,7 +761,7 @@
       const timer = setTimeout(() => reject(new Error(G.fatalError || 'Pas de réponse de l\'hôte (délai dépassé)')), 12000);
       const check = setInterval(() => { if (G.fatalError) { clearInterval(check); clearTimeout(timer); reject(new Error(G.fatalError)); } if (G.started) { clearInterval(check); clearTimeout(timer); } }, 100);
     });
-    if (!G.touch) requestLock();
+    if (!G.touch) setTimeout(requestLock, 0);   // après la transition plein écran (voir resume())
   }
 
   async function boot() {

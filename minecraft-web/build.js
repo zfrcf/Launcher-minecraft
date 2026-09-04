@@ -10,12 +10,17 @@
 //
 // En local, `public/` existe déjà : le script ne fait rien (le dossier du dépôt fait foi).
 'use strict';
-const { execSync } = require('child_process');
+const { execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 
 const REPO = 'zfrcf/Launcher-minecraft';
-const REFS = [process.env.SITE_REF || 'claude/repo-cleanup-extract-zip-9cei1x', 'main'];
+// Ordre des références : SITE_REF (choix explicite) d'abord, puis la branche de développement,
+// puis main. La branche vient avant main parce que ce travail n'y est pas encore fusionné : servir
+// main aujourd'hui déploierait une version antérieure. **À la fusion dans main, retirer la branche
+// de cette liste** (ou définir SITE_REF=main dans les variables du projet Vercel).
+const REFS = [process.env.SITE_REF, 'claude/repo-cleanup-extract-zip-9cei1x', 'main'].filter(Boolean);
+const REF_VALIDE = /^[\w.\-\/]+$/;
 const pub = path.join(__dirname, 'public');
 
 function compte(dir) {
@@ -39,15 +44,21 @@ fs.rmSync(tmp, { recursive: true, force: true });
 fs.mkdirSync(tmp, { recursive: true });
 
 let ok = false;
+const archive = path.join(__dirname, '.source.tar.gz');
 for (const ref of REFS) {
+  if (!REF_VALIDE.test(ref)) { console.warn(`Référence ignorée (caractères inattendus) : ${ref}`); continue; }
   const url = `https://codeload.github.com/${REPO}/tar.gz/refs/heads/${ref}`;
   try {
     console.log('Récupération de ' + ref);
+    // Téléchargement et extraction séparés, sans shell : une archive incomplète fait échouer curl
+    // au lieu d'être masquée par le code de retour de tar dans un tube.
     // --strip-components=1 retire le dossier racine « Launcher-minecraft-<ref> » de l'archive.
-    execSync(`curl -fsSL "${url}" | tar -xz -C "${tmp}" --strip-components=1`, { stdio: ['ignore', 'inherit', 'inherit'], shell: '/bin/bash' });
+    execFileSync('curl', ['-fsSL', '-o', archive, url], { stdio: ['ignore', 'inherit', 'inherit'] });
+    execFileSync('tar', ['-xzf', archive, '-C', tmp, '--strip-components=1'], { stdio: ['ignore', 'inherit', 'inherit'] });
     ok = true;
     break;
   } catch (e) { console.warn(`Branche ${ref} indisponible`); }
+  finally { fs.rmSync(archive, { force: true }); }
 }
 if (!ok) throw new Error(`Impossible de récupérer le dépôt (${REFS.join(', ')})`);
 

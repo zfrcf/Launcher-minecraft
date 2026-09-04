@@ -8,26 +8,33 @@
 // « par envoi de fichiers » n'a besoin que de build.js + vercel.json + package.json : tout le
 // reste vient du dépôt, à l'identique de ce qui est commité.
 'use strict';
-const { execSync } = require('child_process');
+const { execSync, execFileSync } = require('child_process');
 const fs = require('fs');
 const path = require('path');
 const crypto = require('crypto');
 
 const SRC_REPO = 'https://github.com/zardoy/mwc-mcraft-pages';
 const SITE_REPO_RAW = 'https://raw.githubusercontent.com/zfrcf/Launcher-minecraft';
-const SITE_REFS = [process.env.SITE_REF || 'claude/repo-cleanup-extract-zip-9cei1x', 'main'];
+// Ordre des références : SITE_REF (choix explicite) d'abord, puis la branche de développement,
+// puis main. La branche vient avant main parce que ce travail n'y est pas encore fusionné : servir
+// main aujourd'hui déploierait une version antérieure. **À la fusion dans main, retirer la branche
+// de cette liste** (ou définir SITE_REF=main dans les variables du projet Vercel).
+const SITE_REFS = [process.env.SITE_REF, 'claude/repo-cleanup-extract-zip-9cei1x', 'main'].filter(Boolean);
 const tmp = path.join(__dirname, '.mwc-src');
 const dist = path.join(__dirname, 'dist');
 
 function sha(s) { return crypto.createHash('sha256').update(s).digest('hex').slice(0, 12); }
 function fetchText(url) {
-  // curl est présent sur les machines de build Vercel et en local ; -f fait échouer sur 404.
-  return execSync(`curl -fsSL "${url}"`, { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
+  // execFileSync : pas de shell, donc rien à échapper même si l'URL vient d'une variable
+  // d'environnement. -f fait échouer sur 404.
+  return execFileSync('curl', ['-fsSL', url], { encoding: 'utf8', maxBuffer: 16 * 1024 * 1024 });
 }
+const REF_VALIDE = /^[\w.\-\/]+$/;
 function siteFile(name) {
   const local = path.join(__dirname, name);
   if (fs.existsSync(local)) { const t = fs.readFileSync(local, 'utf8'); console.log(`${name} : fichier local (${sha(t)})`); return t; }
   for (const ref of SITE_REFS) {
+    if (!REF_VALIDE.test(ref)) { console.warn(`Référence ignorée (caractères inattendus) : ${ref}`); continue; }
     const url = `${SITE_REPO_RAW}/${ref}/minecraft-navigateur/site/${name}`;
     try { const t = fetchText(url); console.log(`${name} : depuis GitHub ${ref} (${sha(t)})`); return t; } catch (e) { console.warn(`${name} : introuvable sur ${ref}`); }
   }
