@@ -1,0 +1,10 @@
+{
+  "name": "fitnesspark-akinvest-planning",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Planning des équipes Fitness Park et quatre façons de jouer à Minecraft.",
+  "scripts": {
+    "test": "node test-planning.js"
+  },
+  "license": "MIT"
+}
