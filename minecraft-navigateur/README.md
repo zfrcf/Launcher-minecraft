@@ -18,6 +18,27 @@ racine ouvre directement le menu du jeu avec `donutsmp.net` en 1.21.11 pré-remp
 Pour redéployer ou changer de serveur : modifier `site/vercel.json` (redirection) puis
 redéployer le projet Vercel `minecraft-donutsmp`.
 
+### Le mod d'optimisation (`site/mod.js`)
+
+Les mods Fabric (Sodium, Entity Culling, Dynamic FPS…) sont des mods Java : ils ne peuvent pas
+tourner dans un navigateur. `site/mod.js` est leur équivalent côté navigateur, injecté en tête
+de la page avant le client :
+
+- **Profil performance** : tous les réglages du client poussés au maximum et adaptés à
+  l'appareil (cœurs, mémoire, tactile) : carte graphique dédiée, moteur WASM, skins des
+  joueurs désactivés, éclairage simplifié, pas de musique ni de télémétrie, écran maintenu
+  allumé. Réappliqué automatiquement à chaque nouvelle version du mod, ou avec `?reset=1`.
+- **Plein écran partout** : menus compris, sur PC et mobile, dès le premier clic ou touche.
+  Le client ne peut plus le quitter tout seul ; seule la touche Échap du navigateur le fait,
+  et on y revient au geste suivant. Sur iPhone/iPad (pas d'API plein écran dans Safari), un
+  bandeau explique comment installer l'app sur l'écran d'accueil. `?fullscreen=0` désactive.
+- **FPS adaptatif** : en jeu, la distance de rendu baisse d'un cran quand les FPS passent
+  sous 24 (spawn de DonutSMP, foule) et remonte quand ils dépassent 50 de façon stable.
+  `?hud=1` affiche un compteur FPS / distance de rendu en haut à gauche.
+
+Les mods réels côté client (Fabric) restent la seule option pour des FPS élevés sur PC : voir
+`minecraft-fabric/`.
+
 ## Jouer maintenant (0 installation, 0 inscription)
 
 1. Ouvre <https://mcraft.fun/?ip=donutsmp.net&version=1.21.11> (ou le bouton sur
