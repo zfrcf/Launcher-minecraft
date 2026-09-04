@@ -1,14 +1,12 @@
 # Rapport de session — nuit et matinée du 4 septembre 2026
 
 ## Résumé en 5 lignes
-**J'ai trouvé pourquoi DonutSMP ne chargeait pas** : le mod imposait la version 1.21.11, que ce
-client sait négocier mais pas afficher. Il se connectait, puis restait sur un écran vide. Il se
-connecte maintenant en 1.21.8, vérifié sur un vrai serveur. Pour le reste : les mods Fabric ne
-tourneront jamais dans un navigateur, j'ai donc poussé le client web au maximum de ce qu'il permet.
-Le site DonutSMP a maintenant une page de diagnostic, des messages d'erreur en français, un choix
-de relais et un écran d'explication quand le navigateur bloque le stockage. CubeCraft Web passe en
-plein écran partout et ajuste sa distance de rendu aux FPS. Les installateurs Fabric vérifient
-chaque téléchargement. Deux vrais bugs corrigés dans l'outil de planning.
+**J'ai trouvé pourquoi DonutSMP ne chargeait pas** : le site imposait la version 1.21.11, que ce
+client sait négocier mais pas afficher — il se connectait, puis restait sur un écran vide. Il se
+connecte maintenant en 1.21.8, vérifié sur un vrai serveur, et le jeu explique désormais en
+français les trois pannes qui laissaient le joueur devant un écran muet. Le reste de la nuit :
+diagnostic, choix de relais, plein écran partout dans CubeCraft, installateurs Fabric vérifiés par
+somme de contrôle, deux vrais bugs corrigés dans l'outil de planning.
 
 ## Ce qui est en ligne maintenant
 | Site | Adresse | État |
