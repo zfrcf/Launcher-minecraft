@@ -72,3 +72,19 @@
 - Site en ligne vérifié dans un vrai navigateur, sur la copie servie par Vercel :
   joueur neuf → version 1.21.8 ; joueur venu hier en 1.21.11 → corrigé automatiquement en 1.21.8 ;
   page de diagnostic → croix rouge et explication quand l'entrée est sur une version muette. → OK
+
+## 09 h 10 – 09 h 40 — Ce que voit un joueur dont le compte est refusé
+
+- Serveur de test repassé en mode « online » (compte Microsoft exigé), comme DonutSMP. Résultat
+  avant correction : un mur de texte anglais, « End reason: WebSocket connection closed with
+  unknown reason », suivi des octets bruts du dernier paquet. Aucun bandeau d'aide. → défaut réel
+- Deux causes. D'abord le mod n'écoutait que l'écran de chargement, or le client remplace toute la
+  page par un écran de déconnexion qui ne passe pas par là. Ensuite l'explication ne distinguait
+  pas « refusé à l'entrée » de « coupé en cours de partie » : les deux donnent le même message
+  WebSocket, mais pas du tout le même conseil.
+- Corrigé : surveillance dédiée de l'écran de déconnexion, indépendante du régulateur de FPS (qui
+  peut ne jamais démarrer si l'échec survient tôt), et `explain()` reçoit désormais l'information
+  « es-tu déjà entré en jeu ». → OK, bandeau vérifié en test réel
+- Contre-épreuve : partie normale sur le même serveur, en jeu, vie 20, 81 colonnes de chunks,
+  **aucun bandeau**. Pas de faux avertissement. → OK
+- `test.js` : 23 contrôles.

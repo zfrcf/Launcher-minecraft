@@ -245,3 +245,17 @@ peux pas vérifier moi-même.
   vraie synchronisation serait un chantier à part entière.
 - **Le mode « héberger une partie » de CubeCraft** (pair à pair) n'a pas été testé : il demande deux
   machines qui se joignent par Internet.
+
+## Ajouté après le rapport : le message quand le compte est refusé
+
+DonutSMP exige un compte Microsoft. J'ai reproduit ce refus sur mon serveur de test, et ce que
+voyait le joueur était indéfendable : un écran anglais annonçant « WebSocket connection closed with
+unknown reason », suivi des octets bruts du dernier paquet reçu. Rien qui aide, et un message qui
+oriente vers une panne réseau alors que le problème est le compte.
+
+Le mod affiche maintenant un bandeau en français dans ce cas précis, avec les trois causes
+possibles dans l'ordre de fréquence : compte Microsoft non connecté, serveur qui refuse les
+connexions relayées, serveur saturé. Il sait faire la différence entre « refusé à l'entrée » et
+« coupé en cours de partie », qui produisent le même message technique mais appellent des gestes
+opposés. Vérifié dans les deux sens : le bandeau apparaît sur le refus, et n'apparaît pas sur une
+partie normale.

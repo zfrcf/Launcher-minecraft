@@ -37,6 +37,14 @@ verifie('mod.js impose une version que le client sait afficher',
   AFFICHABLES.indexOf(versionMod) !== -1, 'version trouvée : ' + versionMod);
 verifie('mod.js n’impose plus 1.21.11 (le monde ne s’y affiche jamais)', !/versionOverride\s*=\s*'1\.21\.11'/.test(mod));
 
+// L'écran « You have been disconnected » du client ne passe pas par le statut de chargement :
+// sans surveillance dédiée, le joueur reste devant un message anglais suivi d'octets bruts.
+verifie('mod.js explique l’écran de déconnexion du client',
+  mod.includes('have been disconnected') && mod.includes('surveillerEcranDeconnexion'));
+verifie('mod.js surveille cet écran sans dépendre du régulateur de FPS',
+  /setInterval\(function \(\) \{\s*try \{ surveillerEcranDeconnexion/.test(mod));
+verifie('le bandeau d’aide porte un repère stable', mod.includes("setAttribute('data-mod-aide'"));
+
 verifie('mod.js expose les quatre options d’URL documentées',
   ['safe=1', 'reset=1', 'fullscreen=0', 'hud=1'].every((o) => mod.includes(o)));
 

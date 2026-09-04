@@ -3,8 +3,15 @@
 Tu avais raison sur un point : un client **réécrit de zéro**, sans une ligne de code Mojang, qui
 parle le protocole officiel, est légal. Il existe : **Minecraft Web Client** (licence MIT, projet
 PrismarineJS / zardoy). Il tourne dans le navigateur (PC et mobile), se connecte avec **ton compte
-Microsoft** aux serveurs officiels en mode « online », et supporte les versions 1.8 à 1.21.11.
-DonutSMP accepte les clients 1.7.2 à 26.2, donc 1.21.11 passe.
+Microsoft** aux serveurs officiels en mode « online ».
+
+**La version compte, et c'est le piège principal.** Le client sait *négocier* le protocole jusqu'à
+1.21.11, mais il n'embarque les **données de blocs** que pour 1.21.1, 1.21.3, 1.21.4, 1.21.5,
+1.21.6 et 1.21.8. Avec une autre version, la connexion réussit, le pseudo s'affiche, le chat
+fonctionne — et le monde ne s'affiche **jamais** : l'écran reste sur « Loading world chunks 0 % »,
+sans le moindre message d'erreur. Vérifié sur un serveur local : 0 colonne de chunks en 1.21.11,
+81 en 1.21.8, même monde et même machine. Le site force donc **1.21.8**. DonutSMP accepte les
+clients 1.7.2 à 26.2, donc 1.21.8 passe sans difficulté.
 
 Une seule contrainte technique : un navigateur ne sait pas ouvrir une connexion TCP. Il faut un
 **relais WebSocket** entre le navigateur et le serveur Minecraft. Le projet en fournit un public
@@ -14,7 +21,7 @@ et gratuit (utilisé par défaut), et tu peux héberger le tien sur Render (doss
 
 Le dossier `site/` déploie sur Vercel la version compilée officielle du client (récupérée au
 moment du build depuis le dépôt public de son intégration continue, dossier `docs/`). L'adresse
-racine ouvre directement le menu du jeu avec `donutsmp.net` en 1.21.11 pré-rempli.
+racine ouvre directement le menu du jeu avec `donutsmp.net` en 1.21.8 pré-rempli.
 Pour redéployer ou changer de serveur : modifier `site/vercel.json` (redirection) puis
 redéployer le projet Vercel `minecraft-donutsmp`.
 
@@ -67,7 +74,7 @@ Les mods réels côté client (Fabric) restent la seule option pour des FPS éle
 
 ## Jouer maintenant (0 installation, 0 inscription)
 
-1. Ouvre <https://mcraft.fun/?ip=donutsmp.net&version=1.21.11> (ou le bouton sur
+1. Ouvre <https://mcraft.fun/?ip=donutsmp.net&version=1.21.8> (ou le bouton sur
    <https://cubecraft-web.vercel.app/serveur>).
 2. Clique sur le serveur → le client demande une **connexion Microsoft** : un code à saisir sur
    microsoft.com/link, avec ton compte Minecraft normal. Rien n'est stocké côté site : le jeton
@@ -88,7 +95,7 @@ Le tien aussi (Render), mais il n'est utilisé que par toi : moins de risque de 
    *Build* `npm install`, *Start* `npm start`, plan Free.
 2. Note l'adresse obtenue, ex. `https://minecraft-web-proxy-xxxx.onrender.com`.
 3. Joue avec ton relais :
-   `https://mcraft.fun/?ip=donutsmp.net&version=1.21.11&proxy=https://minecraft-web-proxy-xxxx.onrender.com`
+   `https://mcraft.fun/?ip=donutsmp.net&version=1.21.8&proxy=https://minecraft-web-proxy-xxxx.onrender.com`
    (ou colle l'adresse dans le champ *Proxy* du client, ou sur la page serveur du site).
 
 Offre gratuite Render : le service s'endort après 15 minutes sans trafic, le premier chargement
@@ -107,7 +114,9 @@ réelle sur DonutSMP (le bac à sable n'a pas de sortie TCP vers les serveurs Mi
 - **Règles du serveur** : DonutSMP autorise-t-il un client tiers ? Techniquement c'est un client
   vanilla (aucune triche) mais lis leurs règles ; un anticheat peut réagir au proxy.
 - **Adresse IP** : le serveur voit l'IP du relais, pas la tienne.
-- **Versions 26.x** : le client s'arrête à 1.21.11 pour l'instant ; DonutSMP accepte 1.21.11.
+- **Versions 26.x** : hors de portée du client. Et même en 1.21.9 ou 1.21.11, il se connecte sans
+  jamais afficher le monde (voir plus haut) : reste en 1.21.8. La page `/diagnostic` signale en
+  rouge une entrée de serveur configurée sur une version que le client ne sait pas afficher.
 
 ## Héberger aussi le client (optionnel)
 

@@ -292,7 +292,9 @@
             }
           } else { goodStreak = 0; }
         }
+        if (inGame) dejaEnJeu = true;
         surveillerCoupure();
+        surveillerEcranDeconnexion();
         if (el) el.textContent = fps + ' FPS · rendu ' + (opts.renderDistance) + ' · ' + tier;
       }
       } catch (e) { if (!tick.__prevenu) { tick.__prevenu = true; console.warn(TAG, 'réglage automatique en difficulté :', e); } }
@@ -307,8 +309,15 @@
   // marche à suivre et un lien vers /diagnostic (relais, serveur, carte graphique, état du mod).
   var LOADING_LIMIT_MS = 45000;
   var helpEl = null;
-  function explain(msg) {
+  function explain(msg, enJeu) {
     var m = String(msg || '');
+    // Une fermeture de connexion AVANT d'être entré en jeu n'est pas une coupure réseau : c'est un
+    // refus. Sur DonutSMP, la cause de loin la plus fréquente est le compte. Le message brut du
+    // client (« WebSocket connection closed with unknown reason ») ne le dit pas.
+    if (enJeu === false && /socket|closed|ECONN|refused|reset|unknown reason/i.test(m)) {
+      return ['Le serveur a refusé la connexion.',
+        'Tu n’es jamais entré en jeu : ce n’est pas une coupure réseau. Les trois causes, dans l’ordre : ton compte Microsoft n’est pas connecté ou n’a pas Minecraft ; le serveur refuse les connexions passant par un relais public ; le serveur est en maintenance ou saturé. Reconnecte ton compte, puis lance le diagnostic.'];
+    }
     if (/proxy server|Connection setup error|most likely is down/i.test(m)) return ['Le relais public ne répond pas.', 'Le navigateur passe par un relais (proxy.mcraft.fun) pour joindre DonutSMP. Il est en panne, saturé ou bloqué par ton réseau. Réessaie dans quelques minutes, ou héberge ton propre relais (dossier minecraft-navigateur, gratuit sur Render).'];
     if (/encryption|auth|Microsoft|login|account|profile/i.test(m)) return ['Problème de compte Microsoft.', 'DonutSMP exige un compte Microsoft avec Minecraft. Reconnecte-toi (bouton compte dans la liste des serveurs), puis relance. Si tu as plusieurs comptes, vérifie que c’est le bon.'];
     if (/outdated|version|unsupported|protocol/i.test(m)) return ['Version refusée par le serveur.', 'Le client se connecte en ' + VERSION_CLIENT + '. Dans la liste des serveurs, modifie l’entrée DonutSMP et choisis une autre version acceptée par le serveur.'];
@@ -320,6 +329,7 @@
     if (!document.body) return;
     if (helpEl) helpEl.remove();
     helpEl = document.createElement('div');
+    helpEl.setAttribute('data-mod-aide', '1');
     helpEl.setAttribute('style', 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:' + (soft ? '#1f2937' : '#7f1d1d') + ';color:#fff;font:14px/1.45 system-ui,sans-serif;padding:12px 14px;border-radius:10px;box-shadow:0 2px 14px rgba(0,0,0,.6)');
     var b = document.createElement('b'); b.textContent = title;
     var p = document.createElement('div'); p.textContent = detail; p.style.margin = '4px 0 8px';
@@ -358,6 +368,27 @@
       });
     } catch (e) {}
   }
+  // Le client remplace toute la page par un écran « You have been disconnected from the server »,
+  // en anglais, suivi de l'octet brut du dernier paquet reçu. Ce n'est pas un statut de chargement :
+  // rien ne passait par hookStatus(), et le joueur restait devant un mur de texte incompréhensible.
+  // Constaté en test réel contre un serveur exigeant un compte Microsoft.
+  var ecranVu = false;
+  function surveillerEcranDeconnexion() {
+    if (ecranVu || !document.body) return;
+    var t = document.body.innerText || '';
+    if (t.indexOf('have been disconnected') === -1) return;
+    ecranVu = true;
+    var raison = '';
+    var m = t.match(/End reason:\s*([^]*?)(?:Last Server Packet|Last status|$)/);
+    if (m) raison = m[1].replace(/\s+/g, ' ').trim().slice(0, 160);
+    console.warn(TAG, 'écran de déconnexion du client :', raison);
+    var ex = explain(raison, dejaEnJeu);
+    showHelp(ex[0], ex[1] + (raison ? ' (message du client : ' + raison + ')' : ''), false);
+  }
+  // Mémorise si on est entré en jeu au moins une fois : c'est ce qui sépare « refusé à l'entrée »
+  // de « coupé en cours de partie », et l'écran de déconnexion efface l'état du jeu.
+  var dejaEnJeu = false;
+
   function hookStatus() {
     var orig = globalThis.setLoadingScreenStatus;
     if (typeof orig !== 'function' || orig.__mod) return false;
@@ -365,7 +396,7 @@
       try {
         if (typeof status === 'string' && status && (isError || ressembleAUneErreur(status))) {
           if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
-          var ex = explain(status);
+          var ex = explain(status, inGameNow());
           console.warn(TAG, 'erreur du client :', status);
           showHelp(ex[0], ex[1], false);
         } else if (typeof status === 'string' && status && !inGameNow()) {
@@ -382,6 +413,14 @@
     globalThis.setLoadingScreenStatus = wrapped;
     return true;
   }
+
+  // Surveillance indépendante de l'écran de déconnexion : elle ne dépend ni de window.options ni
+  // de la boucle du régulateur, qui peuvent ne jamais démarrer si l'échec survient tôt. Un test de
+  // chaîne toutes les 1,5 s est négligeable, et la surveillance s'arrête dès qu'elle a servi.
+  var veille = setInterval(function () {
+    try { surveillerEcranDeconnexion(); } catch (e) {}
+    if (ecranVu) clearInterval(veille);
+  }, 1500);
 
   // window.options et setLoadingScreenStatus sont créés par l'application après ce script : on attend.
   var tries = 0, gotOptions = false, gotStatus = false;
