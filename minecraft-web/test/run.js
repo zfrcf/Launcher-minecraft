@@ -57,4 +57,31 @@ for (const c of w.chunks.values()) {
 }
 console.log('maillage de 25 chunks :', Date.now() - t1, 'ms,', faces, 'faces');
 assert(faces > 1000);
+
+// ---- Cohérence du site : ce qui casse silencieusement quand on ajoute un fichier ----
+// (un script ajouté dans public/js mais oublié dans la liste de index.html ne serait jamais chargé)
+const fs = require('fs');
+const vm = require('vm');
+const pub = path.join(__dirname, '..', 'public');
+const index = fs.readFileSync(path.join(pub, 'index.html'), 'utf8');
+
+const listes = index.match(/var names = \[([^\]]*)\]/);
+assert(listes, 'liste des scripts introuvable dans index.html');
+const declares = listes[1].split(',').map((s) => s.trim().replace(/^'|'$/g, '')).filter(Boolean);
+const presents = fs.readdirSync(path.join(pub, 'js')).filter((f) => f.endsWith('.js')).map((f) => f.replace(/\.js$/, ''));
+
+for (const f of presents) assert(declares.includes(f), 'public/js/' + f + '.js existe mais n\'est chargé nulle part dans index.html');
+for (const d of declares) assert(presents.includes(d), 'index.html charge js/' + d + '.js qui n\'existe pas');
+
+for (const f of presents) {
+  const code = fs.readFileSync(path.join(pub, 'js', f + '.js'), 'utf8');
+  try { new vm.Script(code); } catch (e) { assert.fail('public/js/' + f + '.js : JavaScript invalide — ' + e.message); }
+}
+console.log('site :', declares.length, 'scripts déclarés et présents, tous syntaxiquement valides');
+
+// Le plein écran doit rester branché : sans cet appel, le module est chargé mais jamais démarré.
+const main = fs.readFileSync(path.join(pub, 'js', 'main.js'), 'utf8');
+assert(main.includes('MC.Fullscreen.init()'), 'main.js ne démarre plus le plein écran');
+assert(main.includes('adaptDistance'), 'main.js ne règle plus la distance de rendu selon les FPS');
+
 console.log('OK : tous les tests passent');

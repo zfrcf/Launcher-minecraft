@@ -4,6 +4,7 @@
   "private": true,
   "description": "Minecraft dans le navigateur : client open source (MIT) prêt à jouer sur DonutSMP avec ton compte Microsoft.",
   "scripts": {
-    "build": "node build.js"
+    "build": "node build.js",
+    "test": "node test.js"
   }
 }
