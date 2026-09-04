@@ -2,6 +2,17 @@
   "version": 2,
   "cleanUrls": true,
   "headers": [
-    { "source": "/(.*)", "headers": [ { "key": "Cache-Control", "value": "no-cache" } ] }
-  ]
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Cache-Control",
+          "value": "no-cache"
+        }
+      ]
+    }
+  ],
+  "buildCommand": "npm run build",
+  "outputDirectory": "public",
+  "framework": null
 }
