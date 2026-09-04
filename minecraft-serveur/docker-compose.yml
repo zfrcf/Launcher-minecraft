@@ -1,0 +1,38 @@
+# Serveur Minecraft Java OFFICIEL 1.21.11 (Paper) + Geyser/Floodgate pour les joueurs mobiles (Bedrock).
+# Le jar officiel est téléchargé depuis Mojang au premier démarrage (image itzg/minecraft-server).
+# Lancer :  docker compose up -d      Journal :  docker compose logs -f      Arrêter :  docker compose down
+services:
+  minecraft:
+    image: itzg/minecraft-server:latest
+    container_name: minecraft-1-21-11
+    restart: unless-stopped
+    ports:
+      - "25565:25565"        # Java (PC)
+      - "19132:19132/udp"    # Bedrock (mobile, console) via Geyser
+    environment:
+      EULA: "TRUE"                     # acceptation de l'EULA Minecraft (obligatoire)
+      VERSION: "1.21.11"
+      TYPE: "PAPER"                    # Paper = serveur optimisé, compatible plugins
+      MEMORY: "${MEMORY:-4G}"
+      USE_AIKAR_FLAGS: "true"          # réglages JVM anti-lag
+      ONLINE_MODE: "true"              # authentification Microsoft obligatoire
+      ENABLE_WHITELIST: "true"
+      WHITELIST: "${WHITELIST}"        # pseudo(s) Java autorisé(s), séparés par des virgules
+      OPS: "${OPS}"                    # pseudo(s) administrateur(s)
+      MOTD: "${MOTD:-Serveur privé d'Antoine - 1.21.11}"
+      DIFFICULTY: "${DIFFICULTY:-normal}"
+      MODE: "${MODE:-survival}"
+      VIEW_DISTANCE: "${VIEW_DISTANCE:-8}"
+      SIMULATION_DISTANCE: "${SIMULATION_DISTANCE:-6}"
+      MAX_PLAYERS: "${MAX_PLAYERS:-8}"
+      SPAWN_PROTECTION: "0"
+      ENABLE_RCON: "false"
+      TZ: "Europe/Paris"
+      # Geyser (Bedrock -> Java) + Floodgate (les joueurs Bedrock n'ont pas besoin de compte Java)
+      PLUGINS: |
+        https://download.geysermc.org/v2/projects/geyser/versions/latest/builds/latest/downloads/spigot
+        https://download.geysermc.org/v2/projects/floodgate/versions/latest/builds/latest/downloads/spigot
+    volumes:
+      - ./data:/data
+    stdin_open: true
+    tty: true

@@ -1,0 +1,15 @@
+{
+  "name": "minecraft-web-proxy-render",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Relais WebSocket -> TCP pour jouer au vrai Minecraft Java dans le navigateur (client open source mcraft.fun).",
+  "scripts": {
+    "start": "minecraft-web-proxy"
+  },
+  "dependencies": {
+    "mwc-proxy": "^0.0.4"
+  },
+  "engines": {
+    "node": ">=18"
+  }
+}

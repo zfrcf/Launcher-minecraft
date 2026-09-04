@@ -1,0 +1,186 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+  <meta name="mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="theme-color" content="#1b1b1b">
+  <title>CubeCraft Web</title>
+  <link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 16 16'%3E%3Crect width='16' height='6' fill='%235fa03a'/%3E%3Crect y='6' width='16' height='10' fill='%23865f42'/%3E%3C/svg%3E">
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+  <div id="game"></div>
+
+  <!-- ÉCRAN D'ACCUEIL -->
+  <div id="start-screen" class="overlay">
+    <div class="panel">
+      <h1>CubeCraft <span>Web</span></h1>
+      <p class="subtitle">Jeu de blocs multijoueur, dans le navigateur, sur PC et mobile. Aucun compte n'est stocké.</p>
+
+      <div id="auth-box" hidden>
+        <div id="auth-status">Non connecté</div>
+        <div class="row">
+          <button id="btn-login" class="btn small">Se connecter avec Microsoft</button>
+          <button id="btn-logout" class="btn small ghost" hidden>Se déconnecter</button>
+        </div>
+      </div>
+
+      <label>Pseudo <input id="in-name" maxlength="16" placeholder="Antoine" autocomplete="off"></label>
+
+      <fieldset>
+        <legend>Comment jouer ?</legend>
+        <label class="radio"><input type="radio" name="mode" value="offline" checked> <b>Solo</b> <small>monde sauvegardé dans ce navigateur</small></label>
+        <label class="radio"><input type="radio" name="mode" value="host"> <b>Héberger</b> <small>mes autres appareils / amis rejoignent avec un code</small></label>
+        <label class="radio"><input type="radio" name="mode" value="join"> <b>Rejoindre</b> <small>avec le code d'une partie hébergée</small></label>
+        <label class="radio"><input type="radio" name="mode" value="ws"> <b>Serveur dédié</b> <small>server.js (Node) avec mot de passe ou compte Microsoft</small></label>
+      </fieldset>
+
+      <div id="opt-seed" class="row">
+        <label>Graine du monde <input id="in-seed" placeholder="aléatoire" autocomplete="off"></label>
+        <button id="btn-seed" class="btn small ghost" type="button">Aléatoire</button>
+      </div>
+      <div id="opt-room" class="row" hidden>
+        <label>Code de la partie <input id="in-room" maxlength="6" placeholder="ABC123" autocomplete="off" style="text-transform:uppercase"></label>
+      </div>
+      <div id="opt-pass" class="row" hidden>
+        <label>Mot de passe <input id="in-pass" type="password" placeholder="(optionnel)" autocomplete="off"></label>
+      </div>
+      <div id="opt-ws" class="row" hidden>
+        <label>Adresse du serveur <input id="in-wsurl" placeholder="wss://mon-serveur.onrender.com/ws" autocomplete="off"></label>
+      </div>
+
+      <div class="row">
+        <label>Mode de jeu
+          <select id="in-gamemode">
+            <option value="survival">Survie (blocs limités, craft)</option>
+            <option value="creative">Créatif (tous les blocs, vol)</option>
+          </select>
+        </label>
+        <label>Distance d'affichage
+          <select id="in-dist">
+            <option value="3">Courte (mobile)</option>
+            <option value="5">Normale</option>
+            <option value="7">Grande</option>
+            <option value="9">Très grande</option>
+          </select>
+        </label>
+        <label>Qualité
+          <select id="in-quality">
+            <option value="auto">Auto (s'adapte aux FPS)</option>
+            <option value="low">Basse (fluide)</option>
+            <option value="medium">Moyenne</option>
+            <option value="high">Haute</option>
+          </select>
+        </label>
+      </div>
+
+      <div id="worlds-list" hidden></div>
+
+      <button id="btn-play" class="btn primary">Jouer</button>
+      <div id="start-error" class="error" hidden></div>
+
+      <p class="subtitle" style="margin-top:10px">Tu veux le vrai Minecraft 1.21.11 ? <a href="serveur.html" style="color:#7dc850">Serveur officiel, statut et connexion →</a></p>
+
+      <details class="help">
+        <summary>Commandes</summary>
+        <p><b>PC :</b> ZQSD / WASD se déplacer · souris regarder · clic gauche casser · clic droit poser · Espace sauter (×2 = voler en créatif) · Maj s'accroupir · Ctrl courir · molette / 1-9 choisir un bloc · E inventaire &amp; craft · T chat · F3 infos · Échap menu.</p>
+        <p><b>Mobile :</b> joystick à gauche · glisser à droite pour regarder · appui court = poser · appui long = casser · boutons sauter / accroupir / voler / inventaire / chat.</p>
+      </details>
+    </div>
+  </div>
+
+  <!-- HUD -->
+  <div id="hud" hidden>
+    <div id="crosshair"></div>
+    <div id="break-progress" hidden><div></div></div>
+    <div id="toast" hidden></div>
+    <div id="room-info" hidden></div>
+    <div id="debug" hidden></div>
+    <div id="chat">
+      <div id="chat-log"></div>
+      <input id="chat-input" maxlength="200" placeholder="Message… (Entrée pour envoyer, Échap pour fermer)" hidden autocomplete="off">
+    </div>
+    <div id="hotbar"></div>
+  </div>
+
+  <!-- Inventaire / craft -->
+  <div id="inventory" class="overlay" hidden>
+    <div class="panel wide">
+      <div class="panel-head"><h2 id="inv-title">Inventaire</h2><button id="btn-inv-close" class="btn small ghost">Fermer (E)</button></div>
+      <div id="inv-grid" class="grid"></div>
+      <div id="craft-box">
+        <h3>Craft</h3>
+        <div id="craft-list"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Menu pause -->
+  <div id="pause" class="overlay" hidden>
+    <div class="panel">
+      <h2>Menu</h2>
+      <div id="pause-info"></div>
+      <button id="btn-resume" class="btn primary">Reprendre</button>
+      <button id="btn-mode" class="btn">Passer en créatif</button>
+      <button id="btn-copy" class="btn" hidden>Copier le code de la partie</button>
+      <button id="btn-respawn" class="btn">Retour au point d'apparition</button>
+      <button id="btn-quit" class="btn ghost">Quitter la partie</button>
+    </div>
+  </div>
+
+  <!-- Déconnexion -->
+  <div id="disconnect" class="overlay" hidden>
+    <div class="panel">
+      <h2>Déconnecté</h2>
+      <p id="disconnect-msg"></p>
+      <button id="btn-back" class="btn primary">Retour à l'accueil</button>
+    </div>
+  </div>
+
+  <!-- Commandes tactiles -->
+  <div id="touch-layer" hidden></div>
+  <div id="joy-base" hidden></div>
+  <div id="joy-knob" hidden></div>
+  <div id="touch-buttons" hidden>
+    <button id="tb-pause" class="tb top">☰</button>
+    <button id="tb-chat" class="tb top">💬</button>
+    <button id="tb-inv" class="tb top">🎒</button>
+    <button id="tb-fly" class="tb top" hidden>🪽</button>
+    <button id="tb-break" class="tb act">⛏</button>
+    <button id="tb-place" class="tb act">🧱</button>
+    <button id="tb-jump" class="tb big">⬆</button>
+    <button id="tb-sneak" class="tb">⬇</button>
+  </div>
+
+  <script>
+    // Chargement séquentiel : bibliothèques (copie locale, sinon CDN) puis scripts du jeu.
+    (function () {
+      var libs = [
+        ['lib/three.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/three.js/r128/three.min.js'],
+        ['lib/peerjs.min.js', 'https://cdnjs.cloudflare.com/ajax/libs/peerjs/1.5.4/peerjs.min.js'],
+        ['lib/msal-browser.min.js', 'https://cdn.jsdelivr.net/npm/@azure/msal-browser@2.38.3/lib/msal-browser.min.js']
+      ];
+      var names = ['noise', 'blocks', 'textures', 'world', 'mesher', 'player', 'host', 'net', 'auth', 'touch', 'ui', 'main'];
+      var game = names.map(function (n) { return 'js/' + n + '.js'; });
+      // URLs absolues des scripts, utilisées par le Web Worker (importScripts)
+      window.MC_SCRIPTS = {};
+      names.forEach(function (n, i) { window.MC_SCRIPTS[n] = new URL(game[i], location.href).href; });
+      function load(src) {
+        return new Promise(function (resolve, reject) {
+          var s = document.createElement('script'); s.src = src; s.onload = resolve; s.onerror = function () { reject(new Error(src)); };
+          document.head.appendChild(s);
+        });
+      }
+      var chain = Promise.resolve();
+      libs.forEach(function (pair) {
+        chain = chain.then(function () { return load(pair[0]).catch(function () { return load(pair[1]); }).catch(function () { console.warn('Bibliothèque indisponible : ' + pair[0]); }); });
+      });
+      game.forEach(function (src) { chain = chain.then(function () { return load(src); }); });
+      chain.catch(function (e) { document.body.insertAdjacentHTML('beforeend', '<div class="overlay"><div class="panel"><h2>Erreur de chargement</h2><p>' + e.message + '</p></div></div>'); });
+    })();
+  </script>
+</body>
+</html>

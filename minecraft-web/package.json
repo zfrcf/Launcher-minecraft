@@ -1,0 +1,21 @@
+{
+  "name": "minecraft-web",
+  "version": "1.0.0",
+  "description": "Jeu voxel multijoueur jouable dans le navigateur (PC + mobile), sans stockage de comptes.",
+  "main": "server.js",
+  "private": true,
+  "scripts": {
+    "start": "node server.js",
+    "dev": "node server.js",
+    "test": "node test/run.js"
+  },
+  "engines": {
+    "node": ">=18"
+  },
+  "dependencies": {
+    "express": "^4.19.2",
+    "jose": "^5.9.6",
+    "ws": "^8.18.0"
+  },
+  "license": "MIT"
+}

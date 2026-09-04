@@ -1,0 +1,128 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <title>Serveur Minecraft 1.21.11</title>
+  <link rel="stylesheet" href="css/style.css">
+  <style>
+    body { overflow: auto; }
+    .page { max-width: 720px; margin: 0 auto; padding: 24px 16px 60px; }
+    .card { background: #2b2b2b; border: 2px solid #111; box-shadow: inset 0 0 0 2px #555; padding: 18px 20px; margin: 14px 0; }
+    .status { display: flex; align-items: center; gap: 10px; font-size: 18px; font-weight: 600; }
+    .dot { width: 14px; height: 14px; border-radius: 50%; background: #777; }
+    .dot.on { background: #5fd35f; box-shadow: 0 0 8px #5fd35f; }
+    .dot.off { background: #d04b4b; }
+    .kv { display: grid; grid-template-columns: 160px 1fr; gap: 6px 12px; font-size: 14px; margin-top: 10px; }
+    .kv b { color: #aaa; font-weight: 500; }
+    code { background: #111; padding: 2px 6px; border-radius: 3px; color: #7dc850; }
+    ol, ul { padding-left: 20px; font-size: 14px; line-height: 1.5; }
+    a { color: #7dc850; }
+    .warn { color: #ffd27a; font-size: 13px; }
+    #players { margin-top: 8px; font-size: 14px; }
+  </style>
+</head>
+<body>
+  <div class="page">
+    <h1>Minecraft <span style="color:#7dc850">1.21.11</span></h1>
+    <p class="subtitle">Le vrai jeu, sur ton serveur privé, avec ton compte Microsoft. PC (Java) et mobile (Bedrock via Geyser).</p>
+    <p class="subtitle"><a href="index.html">← Retour au jeu web CubeCraft</a></p>
+
+    <div class="card">
+      <label>Adresse du serveur <input id="host" placeholder="ex. 82.65.12.34 ou mc.mondomaine.fr" autocomplete="off"></label>
+      <div class="row">
+        <button id="check" class="btn small primary">Vérifier l'état</button>
+        <button id="copy" class="btn small ghost">Copier l'adresse</button>
+      </div>
+      <div class="status" style="margin-top:14px"><span id="dot" class="dot"></span><span id="state">Aucune vérification</span></div>
+      <div class="kv" id="info" hidden>
+        <b>Version</b><span id="version">–</span>
+        <b>Joueurs</b><span id="count">–</span>
+        <b>Description</b><span id="motd">–</span>
+        <b>Bedrock (mobile)</b><span id="bedrock">–</span>
+      </div>
+      <div id="players"></div>
+      <p class="warn" id="note" hidden>État fourni par api.mcsrvstat.us (mis en cache jusqu'à 1 minute).</p>
+    </div>
+
+    <div class="card">
+      <h2>Jouer dans le navigateur, avec ton compte Microsoft</h2>
+      <p style="font-size:14px;color:#ccc">Client Minecraft open source (réécrit de zéro, licence MIT), PC et mobile, connexion Microsoft intégrée. Un relais WebSocket fait le pont vers le serveur : celui du projet par défaut, ou le tien sur Render (dossier <code>minecraft-navigateur</code>).</p>
+      <div class="row">
+        <label>Serveur <input id="web-ip" value="donutsmp.net" autocomplete="off"></label>
+        <label>Version <input id="web-version" value="1.21.11" autocomplete="off"></label>
+      </div>
+      <label>Relais (optionnel) <input id="web-proxy" placeholder="https://minecraft-web-proxy-xxxx.onrender.com" autocomplete="off"></label>
+      <button id="web-play" class="btn primary">Jouer maintenant</button>
+      <p class="warn">Le jeu s'ouvre sur mcraft.fun. Le pseudo, l'inventaire et la progression sont ceux de ton compte. Rendu et FPS inférieurs au client officiel avec Sodium.</p>
+    </div>
+
+    <div class="card">
+      <h2>Se connecter (client officiel)</h2>
+      <ol>
+        <li><b>PC (Java 1.21.11)</b> : launcher officiel → connecté avec ton compte Microsoft → Multijoueur → Ajouter un serveur → <code id="addr-java">adresse:25565</code>.</li>
+        <li><b>Mobile (application Minecraft)</b> : Jouer → Serveurs → Ajouter un serveur → adresse <code id="addr-bedrock">adresse</code>, port <code>19132</code>. Le serveur doit avoir Geyser + Floodgate (fourni dans le dossier <code>minecraft-serveur</code>).</li>
+        <li><b>Accès réservé</b> : seuls les pseudos de la liste blanche entrent. Joueur mobile = pseudo préfixé d'un point (<code>.Antoine</code>).</li>
+      </ol>
+    </div>
+
+    <div class="card">
+      <h2>Plus de FPS, moins de lag</h2>
+      <ul>
+        <li>PC : installer <a href="https://modrinth.com/mod/sodium" target="_blank" rel="noopener">Sodium</a> + <a href="https://modrinth.com/mod/lithium" target="_blank" rel="noopener">Lithium</a> (Fabric), distance de rendu 8-12, graphismes « Rapide », 4 Go de RAM alloués.</li>
+        <li>Mobile : distance de rendu 6-8, particules réduites, « Belles feuilles » désactivé.</li>
+        <li>Serveur : Paper + drapeaux Aikar (déjà configurés), distance de vue 8, simulation 6, serveur hébergé en France.</li>
+      </ul>
+    </div>
+  </div>
+  <script>
+    (function () {
+      var $ = function (id) { return document.getElementById(id); };
+      var KEY = 'mc_serveur_host';
+      try { $('host').value = localStorage.getItem(KEY) || ''; } catch (e) { /* ignore */ }
+      function updateAddr() { var h = $('host').value.trim() || 'adresse'; $('addr-java').textContent = h + ':25565'; $('addr-bedrock').textContent = h; }
+      updateAddr();
+      $('host').addEventListener('input', updateAddr);
+      $('copy').addEventListener('click', function () { var h = $('host').value.trim(); if (h && navigator.clipboard) navigator.clipboard.writeText(h); });
+      $('check').addEventListener('click', check);
+      $('host').addEventListener('keydown', function (e) { if (e.key === 'Enter') check(); });
+      function check() {
+        var h = $('host').value.trim();
+        if (!h) { $('state').textContent = 'Indique une adresse'; return; }
+        try { localStorage.setItem(KEY, h); } catch (e) { /* ignore */ }
+        $('state').textContent = 'Vérification…'; $('dot').className = 'dot';
+        Promise.all([
+          fetch('https://api.mcsrvstat.us/3/' + encodeURIComponent(h)).then(function (r) { return r.json(); }),
+          fetch('https://api.mcsrvstat.us/bedrock/3/' + encodeURIComponent(h)).then(function (r) { return r.json(); }).catch(function () { return null; })
+        ]).then(function (res) {
+          var j = res[0], b = res[1];
+          $('note').hidden = false;
+          if (!j || !j.online) { $('dot').className = 'dot off'; $('state').textContent = 'Hors ligne ou injoignable (' + h + ')'; $('info').hidden = true; $('players').textContent = ''; return; }
+          $('dot').className = 'dot on';
+          $('state').textContent = 'En ligne · ' + h;
+          $('info').hidden = false;
+          $('version').textContent = j.version || '?';
+          $('count').textContent = j.players ? j.players.online + ' / ' + j.players.max : '?';
+          $('motd').textContent = j.motd && j.motd.clean ? j.motd.clean.join(' ') : '–';
+          $('bedrock').textContent = b && b.online ? 'accessible (port ' + (b.port || 19132) + ')' : 'non détecté (Geyser absent ou port 19132 fermé)';
+          var list = j.players && j.players.list ? j.players.list.map(function (p) { return p.name || p; }) : [];
+          $('players').textContent = list.length ? 'Connectés : ' + list.join(', ') : '';
+        }).catch(function (e) { $('dot').className = 'dot off'; $('state').textContent = 'Erreur de vérification : ' + e.message; });
+      }
+      if ($('host').value) check();
+      // Client navigateur
+      var WKEY = 'mc_web_proxy';
+      try { $('web-proxy').value = localStorage.getItem(WKEY) || ''; } catch (e) { /* ignore */ }
+      $('web-play').addEventListener('click', function () {
+        var ip = $('web-ip').value.trim() || 'donutsmp.net';
+        var version = $('web-version').value.trim() || '1.21.11';
+        var proxy = $('web-proxy').value.trim();
+        try { localStorage.setItem(WKEY, proxy); } catch (e) { /* ignore */ }
+        var url = 'https://mcraft.fun/?ip=' + encodeURIComponent(ip) + '&version=' + encodeURIComponent(version);
+        if (proxy) url += '&proxy=' + encodeURIComponent(proxy);
+        window.open(url, '_blank', 'noopener');
+      });
+    })();
+  </script>
+</body>
+</html>

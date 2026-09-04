@@ -1,0 +1,16 @@
+# Blueprint Render : relais WebSocket -> TCP (mwc-proxy) pour le client Minecraft navigateur.
+# Sur render.com : New > Blueprint > ce dépôt > Apply. Offre gratuite suffisante.
+services:
+  - type: web
+    name: minecraft-web-proxy
+    runtime: node
+    plan: free
+    rootDir: minecraft-navigateur
+    buildCommand: npm install
+    startCommand: npm start
+    healthCheckPath: /api/vm/net/connect
+    envVars:
+      - key: DISABLE_SIGNAL
+        value: "1"          # ne pas s'inscrire dans la liste publique des relais
+      - key: NODE_VERSION
+        value: "20"

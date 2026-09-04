@@ -1,0 +1,15 @@
+# Déploiement du serveur multijoueur (WebSocket) sur Render.com (offre gratuite).
+services:
+  - type: web
+    name: minecraft-web-serveur
+    env: node
+    plan: free
+    buildCommand: npm install
+    startCommand: node server.js
+    envVars:
+      - key: GAME_KEY
+        generateValue: true
+      - key: MS_CLIENT_ID
+        sync: false
+      - key: ALLOWED_EMAILS
+        sync: false
