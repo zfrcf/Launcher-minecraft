@@ -59,10 +59,31 @@ Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octe
   sur le plein écran et la distance adaptative. J'ai vérifié que retirer un script fait bien
   échouer la suite.
 
+## La vérification qui compte : un vrai serveur Minecraft
+
+J'ai fini par monter un **serveur Minecraft Java 1.21.11 officiel** sur cette machine, avec le
+relais WebSocket, et j'ai connecté le client web dessus. Ce n'est plus une simulation : c'est la
+chaîne complète, navigateur → mod → client → relais → serveur.
+
+- Entrée en jeu confirmée : pseudo, barre de vie, barre d'action, chargement des chunks.
+- **Le mod fonctionne en conditions réelles** : « 14 FPS : distance de rendu → 3 », puis
+  « 59 FPS : distance de rendu → 4 ». Il descend quand ça rame et remonte quand ça respire.
+- Le chat marche : message envoyé, relayé par le serveur, reçu et affiché.
+- Même chose en mode mobile tactile : réglages adaptés, connexion, boutons tactiles, en jeu.
+
+**Mesure avec et sans le mod, sur le même serveur** : 60 images par seconde dans les deux cas (le
+plafond de l'écran), mais distance de rendu 3 sans le mod contre 6 avec, soit 49 chunks affichés
+contre 169. Autrement dit : à confort égal, le mod te fait voir **3,4 fois plus de terrain**. Sur un
+monde de test presque vide, il ne peut pas faire mieux que le plafond. Sur DonutSMP, où la scène est
+chargée, c'est l'inverse qui joue : la distance baisse toute seule pour protéger la fluidité.
+
 ## Ce que j'ai testé pour de vrai
 
 | Vérification | Résultat |
 |---|---|
+| Client web connecté à un vrai serveur Minecraft, via le relais | en jeu, mod actif |
+| Même chose en mode mobile tactile | en jeu, réglages mobiles appliqués |
+| Chat en jeu | message envoyé et reçu |
 | Installateur Fabric de bout en bout | Fabric 0.19.5 + 11 mods installés et vérifiés |
 | Version inexistante passée à l'installateur | refusée avec un message utile |
 | CubeCraft en solo, PC et mobile | jeu lancé, plein écran, aucune erreur |
@@ -71,14 +92,15 @@ Pour chaque déploiement, j'ai retéléchargé le site et comparé octet à octe
 | Distance de rendu adaptative | 5 → 4 → 3 → 2, sans oscillation |
 | Relais WebSocket personnel (mwc-proxy) | démarre et répond correctement |
 | Page de planning : employé, shift, rechargement | données conservées, aucune erreur |
+| Page de planning sans aucun CDN | lisible, parcours complet fonctionnel |
 | Navigateur bloquant le stockage | écran d'explication affiché |
 | Diagnostic hors ligne | verdict correct, aucune erreur |
 
 ## Ce que je n'ai pas pu vérifier
 
-- **Une partie réelle sur DonutSMP.** Cet environnement n'a aucune sortie réseau vers les serveurs
-  Minecraft, et le navigateur du conteneur ne sort pas sur Internet. Tout ce qui touche à la
-  connexion a été testé contre des simulations fidèles, pas contre le vrai serveur.
+- **Une partie réelle sur DonutSMP.** Le serveur de test est local : je n'ai pas de route réseau
+  vers DonutSMP depuis cette machine. Ce qui dépend de DonutSMP lui-même (file d'attente, anticheat
+  face à un relais, charge du serveur aux heures de pointe) reste à confirmer par toi.
 - **`installer.ps1`** : PowerShell n'existe pas ici. Il a reçu les mêmes fonctions que la version
   Linux et une relecture attentive, mais il n'a pas été exécuté. À surveiller au premier lancement.
 - **Les FPS réels.** La machine n'a pas de carte graphique : les mesures viennent d'un rendu
@@ -112,11 +134,15 @@ Le détail est dans `DECISIONS.md`.
   `minecraft-navigateur/README.md`, et la page `/diagnostic` te permet de le tester puis de
   l'enregistrer.
 
+## Fait aussi, en fin de session
+
+- **L'outil de planning ne dépend plus du réseau pour s'afficher.** Une feuille de style de repli
+  est intégrée à la page : inactive tant que le CDN répond, activée automatiquement sinon. Testée
+  dans les trois cas (CDN rapide, absent, lent arrivant après coup), sans conflit ni régression.
+  Concrètement : la page reste lisible et utilisable même sans connexion en salle.
+
 ## Améliorations possibles, non faites
 
-- **L'outil de planning dépend de deux CDN** (Tailwind, Font Awesome). Sans connexion au premier
-  chargement, la page reste fonctionnelle mais s'affiche sans mise en forme. Embarquer les styles
-  la rendrait autonome, au prix de quelques centaines de kilo-octets.
 - **Les données du planning restent dans un seul navigateur.** Pas de synchronisation entre ton
   téléphone et ton ordinateur, et vider les données du navigateur les efface. Un export ou une
   vraie synchronisation serait un chantier à part entière.
