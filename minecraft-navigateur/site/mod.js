@@ -65,11 +65,14 @@
   // stockage » ne soit signalé au joueur.
   function dropCookie(k) {
     try {
-      var dom = location.hostname.split('.').slice(-2).join('.');
       var exp = '=; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
-      document.cookie = k + exp;
-      document.cookie = k + exp + '; Domain=.' + dom;
-      document.cookie = k + exp + '; Domain=.' + dom + '; SameSite=Strict; Secure';
+      document.cookie = k + exp;                       // cookie posé sur l'hôte lui-même
+      // Puis chaque domaine parent : « a.b.vercel.app » donne « b.vercel.app », etc. Le navigateur
+      // ignore ceux qu'il refuse (suffixes publics), il n'y a rien à deviner.
+      var parts = location.hostname.split('.');
+      for (var i = 1; i < parts.length - 1; i++) {
+        document.cookie = k + exp + '; Domain=.' + parts.slice(i).join('.');
+      }
     } catch (e) {}
   }
   function write(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); dropCookie(k); } catch (e) {} }
@@ -242,14 +245,14 @@
   // ------------------------------------------------------------------ 3. FPS ADAPTATIF
   // Distance de rendu ajustée en direct via window.options (proxy réactif du client).
   var FPS_LOW = 24, FPS_HIGH = 50, WINDOW_MS = 4000, COOLDOWN_MS = 10000;
-  var hud = /[?&]hud=1/.test(q) ? null : false;
+  var hudDemande = /[?&]hud=1/.test(q);
 
   function governor() {
     var opts = window.options;
     if (!opts) return;
     var frames = 0, t0 = performance.now(), lastChange = 0, goodStreak = 0;
     var el = null;
-    if (hud === null && document.body) {
+    if (hudDemande && document.body) {
       el = document.createElement('div');
       el.setAttribute('style', 'position:fixed;top:4px;left:4px;z-index:2147483646;background:rgba(0,0,0,.55);color:#0f0;font:12px monospace;padding:2px 6px;border-radius:4px;pointer-events:none');
       document.body.appendChild(el);

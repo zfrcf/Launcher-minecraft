@@ -86,8 +86,19 @@
     results[id] = { state: state, detail: detail, fix: fix || '' };
     render();
   }
-  function withTimeout(p, ms) {
-    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('délai dépassé (' + ms / 1000 + ' s)')); }, ms); })]);
+  // Interrompt vraiment la requête au bout du délai, et libère le minuteur dès qu'elle répond :
+  // sans cela, chaque essai laisserait une requête et un compte à rebours en suspens.
+  function fetchLimite(url, ms) {
+    var ctrl = typeof AbortController === 'function' ? new AbortController() : null;
+    var minuteur;
+    var course = new Promise(function (_, rej) {
+      minuteur = setTimeout(function () {
+        if (ctrl) ctrl.abort();
+        rej(new Error('délai dépassé (' + ms / 1000 + ' s)'));
+      }, ms);
+    });
+    var requete = fetch(url, { cache: 'no-store', signal: ctrl ? ctrl.signal : undefined });
+    return Promise.race([requete, course]).finally(function () { clearTimeout(minuteur); });
   }
   function read(k) { try { var raw = localStorage.getItem(k); if (!raw) return null; var p = JSON.parse(raw); return (p && !Array.isArray(p) && p.data !== undefined) ? p.data : p; } catch (e) { return null; } }
 
@@ -102,7 +113,7 @@
 
   // ---- Relais
   var t0 = performance.now();
-  withTimeout(fetch(PROXY + '/api/vm/net/connect', { cache: 'no-store' }), 10000).then(function (r) {
+  fetchLimite(PROXY + '/api/vm/net/connect', 10000).then(function (r) {
     var ms = Math.round(performance.now() - t0);
     if (r.ok) set('relay', ms > 1500 ? 'warn' : 'ok', 'Répond en ' + ms + ' ms.', ms > 1500 ? 'Relais lent : saccades possibles. Un relais à toi sur Render (dossier minecraft-navigateur) sera plus réactif.' : '');
     else set('relay', 'ko', 'Réponse HTTP ' + r.status + '.', 'Le relais public a un problème. Réessaie dans quelques minutes ou héberge ton relais (README).');
@@ -111,7 +122,7 @@
   });
 
   // ---- Serveur
-  withTimeout(fetch(STATUS, { cache: 'no-store' }), 10000).then(function (r) { return r.json(); }).then(function (d) {
+  fetchLimite(STATUS, 10000).then(function (r) { return r.json(); }).then(function (d) {
     if (!d.online) return set('server', 'ko', 'DonutSMP est hors ligne ou injoignable.', 'Rien à faire côté client : attends que le serveur revienne.');
     var v = (d.version && d.version.name_clean) || '?';
     var players = d.players ? d.players.online + ' joueurs' : '';
@@ -200,7 +211,7 @@
   }
   function testerRelais(url) {
     var t0 = performance.now();
-    return withTimeout(fetch(url + '/api/vm/net/connect', { cache: 'no-store' }), 12000).then(function (r) {
+    return fetchLimite(url + '/api/vm/net/connect', 12000).then(function (r) {
       var ms = Math.round(performance.now() - t0);
       if (!r.ok) throw new Error('réponse HTTP ' + r.status);
       return ms;
@@ -221,7 +232,12 @@
     if (!url) return etat('ko', 'Indique d’abord l’adresse de ton relais.');
     var p = read('proxiesData') || { proxies: [], selected: '' };
     if (!Array.isArray(p.proxies)) p.proxies = [];
-    if (p.proxies.indexOf(url) === -1) p.proxies.unshift(url);
+    // Un même relais saisi en http puis en https ne doit pas créer deux entrées, et la liste
+    // n'a pas vocation à grossir indéfiniment.
+    var sansSchema = function (u) { return String(u).replace(/^https?:\/\//, ''); };
+    p.proxies = p.proxies.filter(function (u) { return sansSchema(u) !== sansSchema(url); });
+    p.proxies.unshift(url);
+    p.proxies = p.proxies.slice(0, 8);
     p.selected = url;
     if (!ecrire('proxiesData', p)) return etat('ko', 'Le navigateur refuse d’enregistrer ce choix.');
     majRelaisActuel();
