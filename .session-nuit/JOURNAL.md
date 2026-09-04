@@ -104,3 +104,15 @@
   la panne (« en jeu depuis 41 s, aucun morceau de terrain affiché »), absent sur la partie saine.
 - `test.js` : 25 contrôles, dont un qui interdit de revenir au mauvais signal.
 - Documents corrigés partout où j'avais écrit « 0 chunk reçu ».
+
+## 10 h 20 – 10 h 50 — Empêcher que la panne revienne par le haut
+
+- Le client compilé est récupéré à chaque build depuis son dépôt amont. Rien n'empêchait une mise à
+  jour amont de retirer les données de 1.21.8 : le site se serait remis à afficher un écran vide,
+  sans que personne le voie avant un joueur.
+- Ajout d'un contrôle au moment du build : la version imposée doit figurer dans **toutes** les
+  listes de versions Java du client. Première version trop faible — elle exigeait la version dans
+  au moins une liste, or 1.21.11 figure dans la liste du protocole et serait passée. Corrigée.
+- Vérifié en remettant 1.21.11 : le build s'arrête, code de sortie 1, et le message nomme la liste
+  fautive. → OK
+- `test.js` : 27 contrôles.

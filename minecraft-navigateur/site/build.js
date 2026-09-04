@@ -86,6 +86,42 @@ if (fs.existsSync(manifestPath)) {
   fs.writeFileSync(manifestPath, JSON.stringify(manifest, null, 2));
 }
 
+// Garde-fou : la version imposée par le mod doit faire partie de celles dont CE build du client
+// possède les données de blocs. Sinon le site se connecte et n'affiche jamais le monde — la panne
+// exacte qui a coûté une session entière. Le client est récupéré à chaque build : sans ce contrôle,
+// une mise à jour amont qui retire une version passerait inaperçue jusqu'à ce qu'un joueur ouvre
+// un écran vide.
+//
+// Le client contient plusieurs listes de versions Java, de longueurs différentes : celle du
+// protocole va jusqu'à 1.21.11, celle des données de blocs s'arrête à 1.21.8. C'est la plus courte
+// qui décide de ce qui s'affiche. On exige donc la version dans **toutes** les listes Java, pas
+// dans une seule : exiger « au moins une » aurait laissé passer 1.21.11, précisément le cas à
+// empêcher. Les listes Bedrock (1.21.42, 1.26.0…) sont écartées par la présence de « 1.21.4 »,
+// qui n'existe que côté Java.
+const versionImposee = (mod.match(/VERSION_CLIENT = '([^']+)'/) || [])[1];
+if (!versionImposee) throw new Error('mod.js : VERSION_CLIENT introuvable');
+const listesJava = new Set();
+(function scanne(dir) {
+  for (const e of fs.readdirSync(dir, { withFileTypes: true })) {
+    const f = path.join(dir, e.name);
+    if (e.isDirectory()) { scanne(f); continue; }
+    if (!e.name.endsWith('.js')) continue;
+    for (const m of fs.readFileSync(f, 'utf8').matchAll(/"1\.21\.\d+"(?:,"1\.\d+(?:\.\d+)?")+/g)) {
+      const liste = m[0].split(',').map((x) => x.replace(/"/g, ''));
+      if (liste.indexOf('1.21.4') === -1) continue;          // liste Bedrock ou fragment isolé
+      listesJava.add(liste.join(','));
+    }
+  }
+})(dist);
+const manquantes = [...listesJava].filter((l) => l.split(',').indexOf(versionImposee) === -1);
+if (listesJava.size === 0) {
+  console.warn(`Aucune liste de versions Java reconnue : contrôle de ${versionImposee} impossible (le client a changé de forme). À vérifier à la main.`);
+} else if (manquantes.length) {
+  throw new Error(`Ce build du client ne gère pas ${versionImposee} partout : absente de la liste [${manquantes[0]}]. Le site se connecterait sans jamais afficher le monde. Corrige VERSION_CLIENT dans mod.js.`);
+} else {
+  console.log(`version ${versionImposee} présente dans les ${listesJava.size} listes Java du client`);
+}
+
 const commit = execSync('git rev-parse --short HEAD', { cwd: tmp }).toString().trim();
 fs.writeFileSync(path.join(dist, 'source.txt'), 'zardoy/mwc-mcraft-pages@' + commit + '\n');
 fs.rmSync(tmp, { recursive: true, force: true });

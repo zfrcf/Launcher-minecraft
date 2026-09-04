@@ -37,6 +37,15 @@ verifie('mod.js impose une version que le client sait afficher',
   AFFICHABLES.indexOf(versionMod) !== -1, 'version trouvée : ' + versionMod);
 verifie('mod.js n’impose plus 1.21.11 (le monde ne s’y affiche jamais)', !/versionOverride\s*=\s*'1\.21\.11'/.test(mod));
 
+// Le build doit refuser de produire un site dont la version imposée n'est pas affichable par le
+// client récupéré ce jour-là. Exiger la version dans une seule liste ne suffit pas : 1.21.11 figure
+// dans la liste du protocole et passerait.
+const buildjs = fs.readFileSync(path.join(site, 'build.js'), 'utf8');
+verifie('build.js refuse une version que le client n’affiche pas',
+  buildjs.includes('listesJava') && buildjs.includes('Corrige VERSION_CLIENT'));
+verifie('ce contrôle exige la version dans toutes les listes Java, pas une seule',
+  buildjs.includes('manquantes') && buildjs.includes("indexOf('1.21.4')"));
+
 // Le chien de garde « connecté mais rien à l'écran » doit lire l'indicateur d'affichage du client,
 // pas le nombre de morceaux reçus par le réseau : ceux-là arrivent, même quand rien ne s'affiche.
 verifie('mod.js surveille « connecté mais le monde ne s’affiche pas »',
