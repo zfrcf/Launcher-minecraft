@@ -1,0 +1,22 @@
+# Journal de session — 4/5 septembre 2026 (heures UTC)
+
+| Heure | Tâche | Résultat |
+|---|---|---|
+| 03:26 | Démarrage du mode autonome. Inventaire du dépôt (5 parties : planning racine, fabric, navigateur, serveur, web). | OK |
+| 03:30 | Plan écrit (`PLAN.md`). Le mod v6 est déjà déployé et vérifié identique au fichier local. | OK |
+| 03:50 | 1.1 Page /diagnostic (8 tests, verdict, rapport copiable). 1.2/1.3 Bandeau d'aide en français sur erreur du client et chargement > 45 s (hook de setLoadingScreenStatus). Tests Chromium OK (bandeau, diagnostic, 0 erreur). | OK |
+| 04:20 | 2.1 Test de fumée CubeCraft Web (serveur local + Chromium PC et mobile) : jeu lancé en solo, HUD affiché, 0 erreur JS, 28 FPS PC (rendu logiciel) / 55 FPS mobile. Rien à corriger côté chargement. | OK |
+| 04:35 | 1.5 Déploiement v6+diagnostic : un octet corrompu dans un commentaire et /diagnostic en 404 (cleanUrls désactivé). Correctif : réécriture /diagnostic dans vercel.json ; build.js récupère mod.js et diagnostic.html depuis GitHub quand ils sont absents, ce qui réduit le déploiement manuel à 4 petits fichiers et garantit l'identité avec le dépôt. | EN COURS |
+| 04:50 | 1.5 corrigé et redéployé : /diagnostic répond 200, mod et page de diagnostic en ligne identiques aux fichiers du dépôt (vérifié octet à octet). | OK |
+| 05:00 | 3.1 installer.sh testé de bout en bout dans un dossier temporaire : Fabric 0.19.5 installé, 11 mods téléchargés (Sodium, Lithium, Entity Culling, Krypton...), code de sortie 0. | OK |
+| 05:20 | 2.2 Plein écran CubeCraft Web (public/js/fullscreen.js) : PC et mobile, verrou d'Échap, paysage. A/B mesuré : aucune régression de FPS. 2.3 Distance de rendu adaptative : testée 5->4->3->2, converge sans oscillation, 0 erreur. | OK |
+| 05:40 | 2.4 CubeCraft Web déployé sur un seul projet Vercel (build.js récupère public/ depuis GitHub). Site en ligne re-téléchargé et rejoué dans Chromium : jeu lancé, plein écran actif, 0 erreur, PC et mobile. Les 5 projets d'assets cubecraft-web-js1..5 deviennent inutiles. | OK |
+| 05:55 | 3.2/3.3 Installateurs Fabric renforcés (bash + PowerShell) : vérification SHA-1 de chaque mod, option --version latest, --ram, récapitulatif, arrêt explicite si Fabric API ou Sodium manque, messages d'erreur sans doublon. Bash testé : 11 mods OK, version inexistante refusée proprement, latest -> 26.2. PowerShell relu (équilibrage vérifié) mais non exécutable ici. | OK |
+| 06:05 | 4.2 Page de planning testée dans Chromium (création employé, créneau, rechargement) : aucune erreur JS, données persistantes. Deux défauts corrigés : un créneau pouvait être enregistré sans collaborateur (invisible dans la grille mais compté dans les heures payées et le coût), et le bouton AJOUTER d'un employé ne disait rien quand un champ obligatoire manquait. Parcours normal revérifié après correction. | OK |
+| 06:12 | 4.1 README racine écrit : présentation des 5 parties du dépôt, liens vers les deux sites en ligne, limites annoncées (données locales du planning, mods Java impossibles dans le navigateur). | OK |
+| 06:25 | Cas limites du mod : stockage refusé par le navigateur (le client amont plante sur page vide -> le mod affiche maintenant un écran d'explication), diagnostic hors ligne (verdict correct, 0 erreur), erreur répétée (un seul bandeau). | OK |
+| 06:40 | Relais WebSocket (mwc-proxy 0.0.4) installé et démarré localement : répond 200 sur /api/vm/net/connect, le chemin utilisé par render.yaml et par la page de diagnostic. docker-compose du serveur validé. | OK |
+| 06:50 | Tests rejouables ajoutés : minecraft-navigateur/site/test.js (15 vérifications, npm test) et extension de minecraft-web/test/run.js (scripts déclarés vs présents, validité de chaque fichier, plein écran et distance adaptative toujours branchés). Test du test : un script retiré de index.html fait bien échouer la suite. | OK |
+| 07:10 | Page /diagnostic : section « Ton relais » (saisie, mesure de latence, mémorisation dans proxiesData, retour au relais public). Testée dans Chromium contre un faux relais local : test 10 ms, enregistrement au bon format, bascule dans les deux sens, message clair si injoignable, 0 erreur. | OK |
+| 07:25 | Multijoueur CubeCraft testé (serveur dédié, deux navigateurs) : Alice et Bob connectés avec mot de passe, /api/health voit 2 joueurs, message de chat transmis. | OK |
+| 07:35 | Persistance du monde testée : bloc posé -> écrit dans world.json à l'arrêt -> rechargé au redémarrage (edits:1). | OK |
