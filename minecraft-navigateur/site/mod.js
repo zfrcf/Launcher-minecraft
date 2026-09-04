@@ -13,11 +13,15 @@
 //     (spawn de DonutSMP, foule de joueurs) et remonte quand ça respire. ?hud=1 affiche
 //     un petit compteur FPS / distance.
 //
+// Diagnostic : ?safe=1 retire tous les réglages du mod (retour aux valeurs par défaut du
+// client), sans plein écran ni FPS adaptatif pour ce chargement. Le mod se réapplique au
+// chargement normal suivant. Si DonutSMP charge en ?safe=1 et pas sans, le mod est en cause.
+//
 // Rien n'est envoyé nulle part : tout reste dans le navigateur du joueur.
 (function () {
   'use strict';
   var TAG = '[mod-optimisation]';
-  var SEED_VERSION = 5;
+  var SEED_VERSION = 6;
   var MARK = 'mwcSeedVersion';
   var q = location.search;
   var isTouch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
@@ -33,8 +37,39 @@
     : { bas: [4, 2, 6], moyen: [6, 3, 8], haut: [8, 4, 10] }[tier];
   var RD_START = RD[0], RD_MIN = RD[1], RD_MAX = RD[2];
 
+  // Toutes les clés de réglage que le mod touche (pour ?safe=1 et le nettoyage entre versions).
+  var KEYS = ['gpuPreference', 'rendererMesher', 'rendererWorldPerformance', 'neighborChunkUpdates', 'keepChunksDistance',
+    'renderDistance', 'smoothLighting', 'newVersionsLighting', 'dayCycleAndLighting', 'starfieldRendering', 'defaultSkybox',
+    'disableBlockEntityTextures', 'loadPlayerSkins', 'renderEars', 'viewBobbing', 'vrSupport', 'displayBossBars', 'showMinimap',
+    'renderDebug', 'fov', 'menuBackgroundMode', 'displayLoadingMessages', 'enableMusic', 'errorReporting', 'backgroundRendering',
+    'preventBackgroundTimeoutKick', 'preventSleep', 'autoFullScreen', 'autoExitFullscreen', 'autoDisplayRotation', 'showHand', 'guiScale'];
+
   function read(k) { try { var raw = localStorage.getItem(k); if (!raw) return null; var p = JSON.parse(raw); return (p && !Array.isArray(p) && p.data !== undefined) ? p.data : p; } catch (e) { return null; } }
-  function write(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); } catch (e) {} }
+  // Le client peut aussi stocker ces clés en cookie (prioritaire sur le stockage local quand il existe).
+  // On efface le cookie du même nom pour que le stockage local fasse foi et qu'aucun « conflit de
+  // stockage » ne soit signalé au joueur.
+  function dropCookie(k) {
+    try {
+      var dom = location.hostname.split('.').slice(-2).join('.');
+      var exp = '=; Path=/; expires=Thu, 01 Jan 1970 00:00:00 GMT';
+      document.cookie = k + exp;
+      document.cookie = k + exp + '; Domain=.' + dom;
+      document.cookie = k + exp + '; Domain=.' + dom + '; SameSite=Strict; Secure';
+    } catch (e) {}
+  }
+  function write(k, v) { try { localStorage.setItem(k, JSON.stringify({ data: v, timestamp: Date.now() })); dropCookie(k); } catch (e) {} }
+
+  // ------------------------------------------------------------------ 0. MODE SANS RISQUE
+  if (/[?&]safe=1/.test(q)) {
+    try {
+      var clean = read('changedSettings') || {};
+      KEYS.forEach(function (k) { delete clean[k]; });
+      write('changedSettings', clean);
+      localStorage.removeItem(MARK);
+      console.info(TAG, 'mode sans risque : réglages du mod retirés, plein écran et FPS adaptatif désactivés');
+    } catch (e) {}
+    return;
+  }
 
   // ------------------------------------------------------------------ 1. PROFIL PERFORMANCE
   try {
@@ -56,10 +91,11 @@
       var s = read('changedSettings');
       if (!s || typeof s !== 'object') s = {};
       // Moteur
-      s.gpuPreference = 'high-performance';        // carte graphique dédiée si l'appareil en a une
+      if (isTouch) delete s.gpuPreference;         // sur mobile : un seul GPU, on laisse le navigateur choisir
+      else s.gpuPreference = 'high-performance';   // PC : carte graphique dédiée si l'appareil en a une
       s.rendererMesher = 'wasm';                   // géométrie compilée : le plus rapide
       s.rendererWorldPerformance = 'maximum';      // tous les threads pour les chunks
-      s.neighborChunkUpdates = false;              // moins de recalculs de géométrie
+      delete s.neighborChunkUpdates;               // retiré en v6 : touche la génération des chunks
       s.keepChunksDistance = 0;                    // libère la mémoire des chunks lointains
       s.renderDistance = RD_START;
       // Rendu
@@ -67,7 +103,7 @@
       s.newVersionsLighting = false;
       s.dayCycleAndLighting = false;
       s.starfieldRendering = false;
-      s.defaultSkybox = false;
+      delete s.defaultSkybox;                      // retiré en v6 : effet non prouvé
       s.disableBlockEntityTextures = true;         // panneaux, bannières, têtes
       s.loadPlayerSkins = false;                   // des centaines de skins à charger sur DonutSMP
       s.renderEars = false;
@@ -79,13 +115,13 @@
       s.fov = isTouch ? 70 : 75;
       // Interface et menus
       s.menuBackgroundMode = 'classic';            // pas de scène 3D dans les menus
-      s.displayLoadingMessages = false;
+      delete s.displayLoadingMessages;             // les messages de chargement restent visibles : ils disent où ça bloque
       s.enableMusic = false;
       s.errorReporting = false;                    // pas de télémétrie en arrière-plan
       // Arrière-plan et veille
       s.backgroundRendering = '5fps';
       s.preventBackgroundTimeoutKick = true;
-      s.preventSleep = true;                       // l'écran ne s'éteint pas en jeu
+      delete s.preventSleep;                       // retiré en v6 : demande un verrou de veille pendant la connexion
       // Plein écran géré par le bloc 2 ; on empêche le client de le quitter tout seul
       s.autoFullScreen = true;
       s.autoExitFullscreen = false;
@@ -125,11 +161,7 @@
     });
     document.addEventListener('keydown', function (e) { if (e.key !== 'Escape') askFS(); }, { capture: true, passive: true });
     // Sortie forcée par le navigateur (Échap) : on repropose au geste suivant, rien d'autre à faire.
-    document.addEventListener('fullscreenchange', function () {
-      if (inFS() && isTouch && screen.orientation && screen.orientation.lock) {
-        screen.orientation.lock('landscape').catch(function () {});
-      }
-    });
+    // Pas de verrou d'orientation ici : le client gère déjà la rotation (autoDisplayRotation).
   }
 
   // iPhone / iPad : pas d'API plein écran dans Safari. Le seul vrai plein écran est
