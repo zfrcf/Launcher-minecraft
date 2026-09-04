@@ -87,12 +87,18 @@ web **sait parler** le protocole 1.21.11, mais il **n'embarque pas les données 
 version. Conséquence : la connexion réussit, le pseudo apparaît, le chat fonctionne — et l'écran
 reste vide pour toujours. Or le mod forçait précisément la connexion à DonutSMP en 1.21.11.
 
-Vérification sur le même serveur, la même scène, la même machine :
+Vérification sur le même serveur, la même scène, la même machine. J'ai d'abord cru que les
+morceaux de terrain n'arrivaient pas du tout ; en insistant, j'ai vu qu'ils arrivent très bien.
+C'est l'affichage qui ne sait pas les construire :
 
-| Version de connexion | Colonnes de chunks reçues | Monde affiché |
-|---|---|---|
-| 1.21.11 | 0 | non, écran bloqué |
-| 1.21.8 | 81 | oui |
+| Version de connexion | Morceaux reçus par le réseau | Morceaux affichés | Écran |
+|---|---|---|---|
+| 1.21.11 | 213 | 0 sur 169 | vide, indicateur bloqué à 0 % |
+| 1.21.8 | 81 | tous | monde affiché |
+
+La distinction compte : le réseau, le relais et le serveur font leur travail. Compter les morceaux
+reçus aurait donné un diagnostic faussement rassurant. Le seul signal juste est celui que le joueur
+a sous les yeux, l'indicateur « Loading world chunks » du client, qui reste sur « 0 % (0 / 169) ».
 
 Le mod se connecte désormais en **1.21.8**, la version la plus récente dont ce client possède les
 données. DonutSMP annonce accepter de 1.7.2 à la dernière version : rien ne s'y oppose. La page de
@@ -138,8 +144,10 @@ processeur. À prendre comme un ordre de grandeur, pas comme une promesse chiffr
 | CubeCraft multijoueur, serveur dédié | 2 joueurs connectés, chat transmis |
 | Persistance du monde après redémarrage du serveur | bloc posé retrouvé |
 | Distance de rendu adaptative | 5 → 4 → 3 → 2, sans oscillation |
-| Connexion en 1.21.11 sur un vrai serveur | monde jamais affiché (0 chunk) — cause trouvée |
-| Connexion en 1.21.8 sur le même serveur | monde affiché, 81 chunks, joueur vivant |
+| Connexion en 1.21.11 sur un vrai serveur | 0 morceau affiché sur 169 — cause trouvée |
+| Connexion en 1.21.8 sur le même serveur | monde affiché, joueur vivant |
+| Bandeau « le monde ne s’affiche pas » | apparaît en 1.21.11, absent en 1.21.8 |
+| Bandeau « le serveur a refusé la connexion » | apparaît sur compte refusé, absent sinon |
 | Mesure images par seconde avec et sans le mod, scène chargée | 4 contre 8-9, trois répétitions |
 | Relais WebSocket personnel (mwc-proxy) | démarre et répond correctement |
 | Page de planning : employé, shift, rechargement | données conservées, aucune erreur |

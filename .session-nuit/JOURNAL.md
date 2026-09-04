@@ -48,11 +48,15 @@
   « Loading world chunks 0 % » sur les deux. Le monde n'était jamais affiché : les 60 images par
   seconde mesurées ne mesuraient rien. **Résultat annulé.**
 - Recherche de la cause : serveur redémarré en créatif et en paisible, monde peuplé côté console
-  (72 000 blocs, 162 entités, chunks maintenus chargés). Toujours 0 chunk reçu.
+  (72 000 blocs, 162 entités, chunks maintenus chargés). Toujours rien à l'écran.
 - Journal du navigateur : `Do not have data for 1.21.11`. Le client négocie le protocole mais n'a
   pas les données de blocs de cette version. **C'est la panne.**
-- Serveur Minecraft 1.21.8 monté à côté, même scène : 81 colonnes de chunks, monde affiché, joueur
-  vivant. Confirmation directe. → OK
+- Serveur Minecraft 1.21.8 monté à côté, même scène : monde affiché, joueur vivant. Confirmation
+  directe. → OK
+- **Correction d'une erreur de ma part, faite plus tard dans la matinée** : j'avais écrit « 0 chunk
+  reçu » en 1.21.11. Faux. Les morceaux de terrain arrivent bien (213 reçus côté réseau) ; c'est
+  l'affichage qui ne sait pas les construire. Le seul signal juste est l'indicateur du client,
+  bloqué sur « 0 % (0 / 169) ». Documents corrigés.
 - Correction : `VERSION_CLIENT = '1.21.8'` dans `mod.js`, `SEED_VERSION` 7 → 8, liste des versions
   affichables et alerte dédiée dans `diagnostic.html`. Décision D7.
 - Mesure refaite proprement, trois répétitions, résultats identiques à une image près :

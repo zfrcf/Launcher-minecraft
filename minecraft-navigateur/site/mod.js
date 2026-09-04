@@ -414,11 +414,46 @@
     return true;
   }
 
+  // Connecté, mais le monde ne s'affiche jamais. C'est la panne qui a coûté le plus cher : le jeu
+  // se déclare chargé, le pseudo et le chat fonctionnent, et l'écran reste sur « Loading world
+  // chunks 0 % » indéfiniment, sans le moindre message. Cause constatée : une version que le client
+  // sait négocier mais dont il n'a pas les données de blocs. Le joueur n'a aucun moyen de le
+  // deviner, donc on le lui dit.
+  // Le bon signal est celui que le joueur a sous les yeux : l'indicateur « Loading world chunks »
+  // du client, qui affiche le nombre de morceaux AFFICHÉS sur le nombre reçu. En 1.21.11 il reste
+  // sur « 0 % (0 / 169) » : les morceaux arrivent bien par le réseau, c'est l'affichage qui ne sait
+  // pas les construire. Compter les morceaux reçus côté réseau induirait en erreur — ils arrivent.
+  var MONDE_VIDE_MS = 40000;
+  var depuisCharge = 0, mondeVu = false, mondeSignale = false;
+  function indicateurChunks() {
+    if (!document.body) return null;
+    var t = document.body.innerText || '';
+    var i = t.indexOf('Loading world chunks');
+    if (i === -1) return null;
+    var m = t.slice(i, i + 80).match(/(\d+)\s*%/);
+    return m ? Number(m[1]) : null;
+  }
+  function surveillerMondeVide() {
+    if (mondeVu || mondeSignale) return;
+    if (!inGameNow()) { depuisCharge = 0; return; }
+    var pct = indicateurChunks();
+    if (pct === null) { mondeVu = true; return; }   // plus d'indicateur : le monde est affiché
+    if (pct > 0) { mondeVu = true; return; }
+    var maintenant = Date.now();
+    if (!depuisCharge) { depuisCharge = maintenant; return; }
+    if (maintenant - depuisCharge < MONDE_VIDE_MS) return;
+    mondeSignale = true;
+    console.warn(TAG, 'en jeu depuis ' + Math.round((maintenant - depuisCharge) / 1000) + ' s, aucun morceau de terrain affiché');
+    showHelp('Tu es connecté, mais le monde ne s’affiche pas.',
+      'Le serveur t’accepte et le chat fonctionne, mais aucun morceau de terrain n’arrive. C’est presque toujours la version : ce client ne sait afficher que 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.6 et 1.21.8. Dans la liste des serveurs, mets l’entrée en ' + VERSION_CLIENT + ', ou clique « Réappliquer le mod ».', false);
+  }
+
   // Surveillance indépendante de l'écran de déconnexion : elle ne dépend ni de window.options ni
   // de la boucle du régulateur, qui peuvent ne jamais démarrer si l'échec survient tôt. Un test de
   // chaîne toutes les 1,5 s est négligeable, et la surveillance s'arrête dès qu'elle a servi.
   var veille = setInterval(function () {
     try { surveillerEcranDeconnexion(); } catch (e) {}
+    try { surveillerMondeVide(); } catch (e) {}
     if (ecranVu) clearInterval(veille);
   }, 1500);
 

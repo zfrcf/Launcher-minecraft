@@ -37,6 +37,13 @@ verifie('mod.js impose une version que le client sait afficher',
   AFFICHABLES.indexOf(versionMod) !== -1, 'version trouvée : ' + versionMod);
 verifie('mod.js n’impose plus 1.21.11 (le monde ne s’y affiche jamais)', !/versionOverride\s*=\s*'1\.21\.11'/.test(mod));
 
+// Le chien de garde « connecté mais rien à l'écran » doit lire l'indicateur d'affichage du client,
+// pas le nombre de morceaux reçus par le réseau : ceux-là arrivent, même quand rien ne s'affiche.
+verifie('mod.js surveille « connecté mais le monde ne s’affiche pas »',
+  mod.includes('surveillerMondeVide') && mod.includes('monde ne s’affiche pas'));
+verifie('ce chien de garde lit l’indicateur d’affichage, pas les chunks reçus',
+  mod.includes("indexOf('Loading world chunks')") && !/surveillerMondeVide[\s\S]{0,900}getColumns/.test(mod));
+
 // L'écran « You have been disconnected » du client ne passe pas par le statut de chargement :
 // sans surveillance dédiée, le joueur reste devant un message anglais suivi d'octets bruts.
 verifie('mod.js explique l’écran de déconnexion du client',

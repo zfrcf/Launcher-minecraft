@@ -40,9 +40,11 @@ l'interface montre « You Died! ». Le journal du navigateur donne la cause exac
 `Do not have data for 1.21.11`. Le client parle le protocole 1.21.11, mais il n'embarque pas les
 données de blocs de cette version.
 
-**Vérification.** Même serveur, même scène, même machine, en 1.21.8 : 81 colonnes de chunks
-chargées, monde affiché, vie à 20. En 1.21.11 : 0 colonne. Les versions dont le client possède les
-données sont 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.6 et 1.21.8.
+**Vérification.** Même serveur, même scène, même machine. En 1.21.8 : monde affiché, vie à 20. En
+1.21.11 : l'indicateur du client reste sur « 0 % (0 / 169) » et l'écran est vide. Correction d'une
+première lecture erronée de ma part : les morceaux de terrain **arrivent** par le réseau (213 reçus
+côté client), c'est l'affichage qui ne sait pas les construire. Les versions dont le client possède
+les données sont 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.6 et 1.21.8.
 
 **Options.** (a) Laisser 1.21.11 et documenter le problème. (b) Descendre à 1.21.8. (c) Détecter la
 version affichable la plus haute au chargement.

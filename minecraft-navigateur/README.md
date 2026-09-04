@@ -9,8 +9,10 @@ Microsoft** aux serveurs officiels en mode « online ».
 1.21.11, mais il n'embarque les **données de blocs** que pour 1.21.1, 1.21.3, 1.21.4, 1.21.5,
 1.21.6 et 1.21.8. Avec une autre version, la connexion réussit, le pseudo s'affiche, le chat
 fonctionne — et le monde ne s'affiche **jamais** : l'écran reste sur « Loading world chunks 0 % »,
-sans le moindre message d'erreur. Vérifié sur un serveur local : 0 colonne de chunks en 1.21.11,
-81 en 1.21.8, même monde et même machine. Le site force donc **1.21.8**. DonutSMP accepte les
+sans le moindre message d'erreur. Attention au diagnostic : les morceaux de terrain **arrivent
+bien** par le réseau (213 reçus lors du test) ; c'est l'affichage qui ne sait pas les construire,
+faute de données de blocs. Vérifié sur un serveur local, même monde et même machine : 0 morceau
+affiché sur 169 en 1.21.11, tous en 1.21.8. Le site force donc **1.21.8**. DonutSMP accepte les
 clients 1.7.2 à 26.2, donc 1.21.8 passe sans difficulté.
 
 Une seule contrainte technique : un navigateur ne sait pas ouvrir une connexion TCP. Il faut un
