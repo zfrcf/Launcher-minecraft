@@ -28,7 +28,11 @@
   // ont déjà chargé le site gardent l'ancien profil : la condition ci-dessous ne réapplique rien
   // tant que le numéro n'a pas bougé.
   // v7 : la détection d'écran tactile ne classe plus un PC à dalle tactile comme un téléphone.
-  var SEED_VERSION = 7;
+  var SEED_VERSION = 8;
+  // Dernière version pour laquelle ce client possède les données de blocs (et donc sait afficher
+  // le monde) : 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.6, 1.21.8. Au-delà il se connecte mais
+  // n'affiche rien. Voir le commentaire sur versionOverride plus bas.
+  var VERSION_CLIENT = '1.21.8';
   var MARK = 'mwcSeedVersion';
   var q = location.search;
   // Un PC à dalle tactile a maxTouchPoints > 0 tout en ayant une souris : le prendre pour un
@@ -143,7 +147,12 @@
       for (var i = 0; i < list.length; i++) { if (list[i] && String(list[i].ip).indexOf('donutsmp.net') === 0) { entry = list[i]; break; } }
       if (!entry) { entry = { ip: 'donutsmp.net' }; list.unshift(entry); }
       entry.name = 'DonutSMP';
-      entry.versionOverride = '1.21.11';
+      // 1.21.8 et non 1.21.11 : ce client sait PARLER le protocole 1.21.11, mais il n'embarque
+      // pas les données de blocs de cette version. Résultat mesuré sur un serveur local : la
+      // connexion aboutit, puis l'écran reste bloqué sur « Loading world chunks 0 % » et rien ne
+      // s'affiche jamais. Le même serveur en 1.21.8 charge 81 colonnes de chunks et affiche le
+      // monde. DonutSMP annonce accepter de 1.7.2 à la dernière version, donc 1.21.8 passe.
+      entry.versionOverride = VERSION_CLIENT;
       entry.authenticatedAccountOverride = true;
       delete entry.usernameOverride;
       entry.lastJoined = Date.now();
@@ -302,7 +311,7 @@
     var m = String(msg || '');
     if (/proxy server|Connection setup error|most likely is down/i.test(m)) return ['Le relais public ne répond pas.', 'Le navigateur passe par un relais (proxy.mcraft.fun) pour joindre DonutSMP. Il est en panne, saturé ou bloqué par ton réseau. Réessaie dans quelques minutes, ou héberge ton propre relais (dossier minecraft-navigateur, gratuit sur Render).'];
     if (/encryption|auth|Microsoft|login|account|profile/i.test(m)) return ['Problème de compte Microsoft.', 'DonutSMP exige un compte Microsoft avec Minecraft. Reconnecte-toi (bouton compte dans la liste des serveurs), puis relance. Si tu as plusieurs comptes, vérifie que c’est le bon.'];
-    if (/outdated|version|unsupported|protocol/i.test(m)) return ['Version refusée par le serveur.', 'Le client se connecte en 1.21.11. Dans la liste des serveurs, modifie l’entrée DonutSMP et choisis une autre version acceptée par le serveur.'];
+    if (/outdated|version|unsupported|protocol/i.test(m)) return ['Version refusée par le serveur.', 'Le client se connecte en ' + VERSION_CLIENT + '. Dans la liste des serveurs, modifie l’entrée DonutSMP et choisis une autre version acceptée par le serveur.'];
     if (/ProtocolError|Failed to load|socket|WebSocket|ECONNRESET/i.test(m)) return ['La connexion a été coupée en cours de partie.', 'Le lien avec le relais s’est interrompu : relais tombé, wifi ou 4G qui a lâché, ou mise en veille du téléphone. Reconnecte-toi ; si ça se répète, teste ton relais dans le diagnostic.'];
     if (/timed? ?out|ECONNREFUSED|ENOTFOUND|Failed to connect|Disconnected|closed|kick/i.test(m)) return ['Connexion au serveur interrompue.', 'DonutSMP est très chargé : file d’attente, anticheat qui coupe les connexions via relais, ou serveur en maintenance. Réessaie, puis lance le diagnostic si ça persiste.'];
     return ['Le jeu a rencontré une erreur.', m.slice(0, 200)];

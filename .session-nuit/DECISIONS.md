@@ -30,3 +30,29 @@
 - Choix : les scripts de build récupèrent les sources depuis le dépôt GitHub au moment du build. Un déploiement n'envoie plus que quelques fichiers de configuration, et le site en ligne correspond exactement à ce qui est commité.
 - Conséquence : les projets `cubecraft-web-js1` à `js5` ne servent plus. Je ne les ai pas supprimés (action irréversible côté compte Vercel) : c'est à toi de le faire si tu le souhaites.
 - Réversible : oui.
+
+## D7 — Version imposée à DonutSMP : 1.21.8 au lieu de 1.21.11
+
+**Contexte.** Le mod forçait la connexion à DonutSMP en 1.21.11. En reprenant les mesures de
+performance sur un vrai serveur, j'ai découvert que le client web se connecte bien en 1.21.11 mais
+n'affiche jamais le monde : l'écran reste sur « Loading world chunks 0 % », la vie reste à zéro et
+l'interface montre « You Died! ». Le journal du navigateur donne la cause exacte :
+`Do not have data for 1.21.11`. Le client parle le protocole 1.21.11, mais il n'embarque pas les
+données de blocs de cette version.
+
+**Vérification.** Même serveur, même scène, même machine, en 1.21.8 : 81 colonnes de chunks
+chargées, monde affiché, vie à 20. En 1.21.11 : 0 colonne. Les versions dont le client possède les
+données sont 1.21.1, 1.21.3, 1.21.4, 1.21.5, 1.21.6 et 1.21.8.
+
+**Options.** (a) Laisser 1.21.11 et documenter le problème. (b) Descendre à 1.21.8. (c) Détecter la
+version affichable la plus haute au chargement.
+
+**Choix : (b), avec la détection de (c) reportée.** DonutSMP annonce accepter de 1.7.2 à la dernière
+version : 1.21.8 passe. La détection dynamique dépendrait de variables internes au client compilé,
+donc d'un détail d'implémentation qui casserait à la prochaine mise à jour du client.
+
+**Réversible.** Une constante `VERSION_CLIENT` dans `mod.js`, et la même liste dans
+`diagnostic.html`. `SEED_VERSION` passe de 7 à 8 pour que les joueurs déjà venus soient corrigés
+automatiquement.
+
+**Portée probable.** C'est très vraisemblablement la cause de « DonutSMP ne charge même pas ».

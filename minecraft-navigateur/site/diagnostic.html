@@ -67,7 +67,12 @@
   'use strict';
   var PROXY = 'https://proxy.mcraft.fun';
   var STATUS = 'https://api.mcstatus.io/v2/status/java/donutsmp.net';
-  var CLIENT_VERSION = '1.21.11';
+  // Doit rester alignée sur VERSION_CLIENT dans mod.js : c'est la dernière version dont ce
+  // client possède les données de blocs. En 1.21.11 il se connecte mais n'affiche jamais le monde.
+  var CLIENT_VERSION = '1.21.8';
+  // Versions dont le client embarque les données de blocs. Une version absente de cette liste se
+  // connecte quand même, puis reste bloquée sur « Loading world chunks 0 % » sans jamais afficher.
+  var VERSIONS_AFFICHABLES = ['1.21.1', '1.21.3', '1.21.4', '1.21.5', '1.21.6', '1.21.8'];
   var tests = [];
   var results = {};
   var el = document.getElementById('tests');
@@ -166,8 +171,16 @@
   var entry = null; for (var i = 0; i < list.length; i++) if (list[i] && String(list[i].ip).indexOf('donutsmp.net') === 0) entry = list[i];
   var modDetail = seed ? 'Version ' + seed + ' appliquée · ' + Object.keys(settings).length + ' réglages · rendu ' + (settings.renderDistance || 'par défaut') : 'Non appliqué (mode sans risque ou premier chargement).';
   var entryDetail = entry ? ' · DonutSMP en ' + (entry.versionOverride || 'version auto') + (entry.authenticatedAccountOverride ? ', compte Microsoft' : ', compte hors ligne ✗') : ' · entrée DonutSMP absente';
-  set('mod', entry && entry.authenticatedAccountOverride ? 'ok' : 'warn', modDetail + entryDetail,
-    entry && !entry.authenticatedAccountOverride ? 'DonutSMP refuse les comptes hors ligne : clique « Réappliquer le mod ».' : '');
+  // Une version que le client ne sait pas afficher est la panne la plus trompeuse : la connexion
+  // réussit, le chat marche, et l'écran reste noir. On la signale avant tout le reste.
+  var versionMuette = entry && entry.versionOverride && VERSIONS_AFFICHABLES.indexOf(entry.versionOverride) === -1;
+  if (versionMuette) {
+    set('mod', 'ko', modDetail + entryDetail,
+      'La version ' + entry.versionOverride + ' n’est pas affichable par ce client : tu te connectes mais le monde ne s’affiche jamais. Clique « Réappliquer le mod » pour repasser en ' + CLIENT_VERSION + '.');
+  } else {
+    set('mod', entry && entry.authenticatedAccountOverride ? 'ok' : 'warn', modDetail + entryDetail,
+      entry && !entry.authenticatedAccountOverride ? 'DonutSMP refuse les comptes hors ligne : clique « Réappliquer le mod ».' : '');
+  }
 
   // ---- Plein écran
   var fsApi = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
