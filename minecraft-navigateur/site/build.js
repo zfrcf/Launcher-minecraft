@@ -40,6 +40,9 @@ if (mod.includes('</script>')) throw new Error('mod.js ne doit pas contenir </sc
 html = html.replace('<head>', () => '<head><script>' + mod + '</script>');
 fs.writeFileSync(indexPath, html);
 
+// Page de diagnostic (relais, serveur, WebGL, état du mod) : /diagnostic
+fs.copyFileSync(path.join(__dirname, 'diagnostic.html'), path.join(dist, 'diagnostic.html'));
+
 // Application installable sur l'écran d'accueil du téléphone (PWA) : nom en français
 const manifestPath = path.join(dist, 'manifest.json');
 if (fs.existsSync(manifestPath)) {

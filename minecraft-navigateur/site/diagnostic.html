@@ -1,0 +1,163 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Diagnostic — Minecraft DonutSMP</title>
+<style>
+  :root { color-scheme: dark; }
+  body { margin: 0; background: #0f1115; color: #e6e6e6; font: 15px/1.5 system-ui, -apple-system, Segoe UI, Roboto, sans-serif; }
+  main { max-width: 760px; margin: 0 auto; padding: 20px 16px 60px; }
+  h1 { font-size: 22px; margin: 0 0 4px; }
+  .sub { color: #9aa3b2; margin: 0 0 18px; }
+  #verdict { padding: 14px 16px; border-radius: 10px; background: #1b1f27; border-left: 5px solid #6b7280; margin-bottom: 18px; font-weight: 600; }
+  #verdict.ok { border-color: #22c55e; } #verdict.ko { border-color: #ef4444; } #verdict.warn { border-color: #f59e0b; }
+  .test { display: grid; grid-template-columns: 28px 1fr; gap: 10px; padding: 12px 0; border-bottom: 1px solid #23272f; }
+  .test .ic { font-size: 18px; line-height: 1.3; }
+  .test b { display: block; }
+  .test .d { color: #9aa3b2; font-size: 14px; }
+  .test .fix { color: #fbbf24; font-size: 14px; margin-top: 4px; }
+  .btns { display: flex; flex-wrap: wrap; gap: 10px; margin: 22px 0; }
+  a.btn, button.btn { background: #2563eb; color: #fff; text-decoration: none; padding: 10px 14px; border-radius: 8px; border: 0; font: inherit; cursor: pointer; }
+  a.btn.sec, button.btn.sec { background: #374151; }
+  pre { background: #1b1f27; padding: 12px; border-radius: 8px; overflow: auto; font-size: 12px; white-space: pre-wrap; }
+  h2 { font-size: 17px; margin: 26px 0 8px; }
+</style>
+</head>
+<body>
+<main>
+  <h1>Diagnostic de connexion</h1>
+  <p class="sub">Vérifie en quelques secondes pourquoi DonutSMP ne charge pas depuis ce navigateur. Rien n'est envoyé nulle part.</p>
+  <div id="verdict">Tests en cours…</div>
+  <div id="tests"></div>
+
+  <div class="btns">
+    <a class="btn" href="./?modal=serversList">Retour au jeu</a>
+    <a class="btn sec" href="./?safe=1&modal=serversList">Mode sans risque (réglages du mod retirés)</a>
+    <a class="btn sec" href="./?reset=1&modal=serversList">Réappliquer le mod</a>
+    <button class="btn sec" id="copy">Copier le rapport</button>
+  </div>
+
+  <h2>Rapport technique</h2>
+  <pre id="report">…</pre>
+</main>
+<script>
+(function () {
+  'use strict';
+  var PROXY = 'https://proxy.mcraft.fun';
+  var STATUS = 'https://api.mcstatus.io/v2/status/java/donutsmp.net';
+  var CLIENT_VERSION = '1.21.11';
+  var tests = [];
+  var results = {};
+  var el = document.getElementById('tests');
+
+  function add(id, title) {
+    var row = document.createElement('div'); row.className = 'test'; row.id = 't-' + id;
+    row.innerHTML = '<div class="ic">⏳</div><div><b></b><span class="d">En cours…</span><div class="fix"></div></div>';
+    row.querySelector('b').textContent = title;
+    el.appendChild(row); tests.push(id);
+  }
+  function set(id, state, detail, fix) {
+    var row = document.getElementById('t-' + id);
+    row.querySelector('.ic').textContent = state === 'ok' ? '✅' : state === 'warn' ? '⚠️' : '❌';
+    row.querySelector('.d').textContent = detail;
+    row.querySelector('.fix').textContent = fix || '';
+    results[id] = { state: state, detail: detail, fix: fix || '' };
+    render();
+  }
+  function withTimeout(p, ms) {
+    return Promise.race([p, new Promise(function (_, rej) { setTimeout(function () { rej(new Error('délai dépassé (' + ms / 1000 + ' s)')); }, ms); })]);
+  }
+  function read(k) { try { var raw = localStorage.getItem(k); if (!raw) return null; var p = JSON.parse(raw); return (p && !Array.isArray(p) && p.data !== undefined) ? p.data : p; } catch (e) { return null; } }
+
+  add('web', 'Accès à Internet depuis la page');
+  add('relay', 'Relais WebSocket public (' + PROXY.replace('https://', '') + ')');
+  add('server', 'Serveur DonutSMP');
+  add('gl', 'Carte graphique (WebGL 2)');
+  add('wasm', 'WebAssembly');
+  add('device', 'Appareil');
+  add('mod', 'Mod d’optimisation');
+  add('fs', 'Plein écran');
+
+  // ---- Relais
+  var t0 = performance.now();
+  withTimeout(fetch(PROXY + '/api/vm/net/connect', { cache: 'no-store' }), 10000).then(function (r) {
+    var ms = Math.round(performance.now() - t0);
+    set('web', 'ok', 'La page joint Internet.');
+    if (r.ok) set('relay', ms > 1500 ? 'warn' : 'ok', 'Répond en ' + ms + ' ms.', ms > 1500 ? 'Relais lent : saccades possibles. Un relais à toi sur Render (dossier minecraft-navigateur) sera plus réactif.' : '');
+    else set('relay', 'ko', 'Réponse HTTP ' + r.status + '.', 'Le relais public a un problème. Réessaie dans quelques minutes ou héberge ton relais (README).');
+  }).catch(function (e) {
+    set('web', 'warn', 'Impossible de joindre le relais : ' + e.message);
+    set('relay', 'ko', 'Injoignable : ' + e.message, 'Sans relais, aucune connexion possible. Vérifie ta connexion, un bloqueur de pub, un pare-feu ou un réseau d’entreprise / école qui filtre.');
+  });
+
+  // ---- Serveur
+  withTimeout(fetch(STATUS, { cache: 'no-store' }), 10000).then(function (r) { return r.json(); }).then(function (d) {
+    if (!d.online) return set('server', 'ko', 'DonutSMP est hors ligne ou injoignable.', 'Rien à faire côté client : attends que le serveur revienne.');
+    var v = (d.version && d.version.name_clean) || '?';
+    var players = d.players ? d.players.online + ' joueurs' : '';
+    var okVersion = /1\.7|1\.8|1\.21|26\./.test(v);
+    set('server', okVersion ? 'ok' : 'warn', 'En ligne · ' + v + ' · ' + players, okVersion ? '' : 'Le serveur annonce une plage de versions inattendue ; le client se connecte en ' + CLIENT_VERSION + '.');
+  }).catch(function (e) { set('server', 'warn', 'Statut indisponible : ' + e.message, 'L’API de statut ne répond pas ; ce n’est pas bloquant pour jouer.'); });
+
+  // ---- WebGL
+  try {
+    var c = document.createElement('canvas');
+    var gl = c.getContext('webgl2') || c.getContext('webgl');
+    if (!gl) throw new Error('aucun contexte');
+    var dbg = gl.getExtension('WEBGL_debug_renderer_info');
+    var renderer = dbg ? gl.getParameter(dbg.UNMASKED_RENDERER_WEBGL) : gl.getParameter(gl.RENDERER);
+    var isGL2 = !!c.getContext('webgl2');
+    var soft = /swiftshader|llvmpipe|software/i.test(renderer);
+    set('gl', soft ? 'warn' : isGL2 ? 'ok' : 'warn', (isGL2 ? 'WebGL 2' : 'WebGL 1 seulement') + ' · ' + renderer,
+      soft ? 'Rendu logiciel : l’accélération matérielle est désactivée dans le navigateur (chrome://settings → Système). Le jeu sera très lent.' : (!isGL2 ? 'Navigateur ancien : mets-le à jour.' : ''));
+  } catch (e) { set('gl', 'ko', 'WebGL indisponible.', 'Active l’accélération matérielle ou change de navigateur (Chrome, Edge, Firefox récents).'); }
+
+  // ---- WASM
+  set('wasm', typeof WebAssembly === 'object' ? 'ok' : 'ko', typeof WebAssembly === 'object' ? 'Disponible.' : 'Indisponible.', typeof WebAssembly === 'object' ? '' : 'Navigateur trop ancien.');
+
+  // ---- Appareil
+  var cores = navigator.hardwareConcurrency || 0, mem = navigator.deviceMemory || 0;
+  var touch = (window.matchMedia && window.matchMedia('(pointer: coarse)').matches) || navigator.maxTouchPoints > 0;
+  var low = (cores && cores <= 4) || (mem && mem <= 4);
+  set('device', low ? 'warn' : 'ok', (cores ? cores + ' cœurs' : 'cœurs inconnus') + ' · ' + (mem ? mem + ' Go mémoire (valeur plafonnée par le navigateur)' : 'mémoire inconnue') + ' · ' + (touch ? 'écran tactile' : 'PC') + ' · ' + screen.width + '×' + screen.height,
+    low ? 'Appareil modeste : le mod démarre avec une distance de rendu réduite et l’ajuste selon les FPS.' : '');
+
+  // ---- Mod
+  var seed = localStorage.getItem('mwcSeedVersion');
+  var settings = read('changedSettings') || {};
+  var list = read('serversList') || [];
+  var entry = null; for (var i = 0; i < list.length; i++) if (list[i] && String(list[i].ip).indexOf('donutsmp.net') === 0) entry = list[i];
+  var modDetail = seed ? 'Version ' + seed + ' appliquée · ' + Object.keys(settings).length + ' réglages · rendu ' + (settings.renderDistance || 'par défaut') : 'Non appliqué (mode sans risque ou premier chargement).';
+  var entryDetail = entry ? ' · DonutSMP en ' + (entry.versionOverride || 'version auto') + (entry.authenticatedAccountOverride ? ', compte Microsoft' : ', compte hors ligne ✗') : ' · entrée DonutSMP absente';
+  set('mod', entry && entry.authenticatedAccountOverride ? 'ok' : 'warn', modDetail + entryDetail,
+    entry && !entry.authenticatedAccountOverride ? 'DonutSMP refuse les comptes hors ligne : clique « Réappliquer le mod ».' : '');
+
+  // ---- Plein écran
+  var fsApi = !!(document.documentElement.requestFullscreen || document.documentElement.webkitRequestFullscreen);
+  var isIOS = /iP(hone|ad|od)/.test(navigator.userAgent) || (navigator.platform === 'MacIntel' && navigator.maxTouchPoints > 1);
+  set('fs', fsApi ? 'ok' : 'warn', fsApi ? 'API disponible : plein écran au premier clic.' : 'Pas d’API plein écran dans ce navigateur.',
+    !fsApi && isIOS ? 'iPhone/iPad : Partager → Sur l’écran d’accueil, puis lance le jeu depuis l’icône.' : '');
+
+  function render() {
+    var ko = tests.filter(function (t) { return results[t] && results[t].state === 'ko'; });
+    var warn = tests.filter(function (t) { return results[t] && results[t].state === 'warn'; });
+    var pending = tests.filter(function (t) { return !results[t]; });
+    var v = document.getElementById('verdict');
+    if (pending.length) { v.textContent = 'Tests en cours… (' + (tests.length - pending.length) + '/' + tests.length + ')'; v.className = ''; }
+    else if (ko.length) { v.className = 'ko'; v.textContent = 'Problème bloquant détecté : ' + ko.map(function (t) { return document.querySelector('#t-' + t + ' b').textContent; }).join(', ') + '. Voir la solution en jaune ci-dessous.'; }
+    else if (warn.length) { v.className = 'warn'; v.textContent = 'Connexion possible, mais des points à surveiller (en jaune).'; }
+    else { v.className = 'ok'; v.textContent = 'Tout est en ordre côté navigateur. Si DonutSMP ne charge toujours pas, le blocage vient du serveur ou du relais à cet instant : réessaie dans quelques minutes.'; }
+    var lines = ['Diagnostic ' + new Date().toISOString(), location.href, navigator.userAgent];
+    tests.forEach(function (t) { var r = results[t]; lines.push((r ? r.state.toUpperCase() : 'EN COURS') + ' · ' + document.querySelector('#t-' + t + ' b').textContent + ' · ' + (r ? r.detail : '')); });
+    document.getElementById('report').textContent = lines.join('\n');
+  }
+  render();
+  document.getElementById('copy').addEventListener('click', function () {
+    var txt = document.getElementById('report').textContent;
+    (navigator.clipboard ? navigator.clipboard.writeText(txt) : Promise.reject()).then(function () { this.textContent = 'Copié ✓'; }.bind(this), function () { window.prompt('Copie le texte :', txt); });
+  });
+})();
+</script>
+</body>
+</html>

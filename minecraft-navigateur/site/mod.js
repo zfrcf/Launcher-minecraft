@@ -223,10 +223,69 @@
     console.info(TAG, 'FPS adaptatif actif : rendu entre', RD_MIN, 'et', RD_MAX);
   }
 
-  // window.options est créé par l'application après ce script : on attend qu'il existe.
-  var tries = 0;
+  // ------------------------------------------------------------------ 4. AIDE EN CAS D'ÉCHEC
+  // Le client affiche ses erreurs en anglais et sans piste de solution. On intercepte son écran de
+  // statut : sur une erreur, ou si le chargement dépasse 45 s, un bandeau en français propose la
+  // marche à suivre et un lien vers /diagnostic (relais, serveur, carte graphique, état du mod).
+  var LOADING_LIMIT_MS = 45000;
+  var helpEl = null;
+  function explain(msg) {
+    var m = String(msg || '');
+    if (/proxy server|Connection setup error|most likely is down/i.test(m)) return ['Le relais public ne répond pas.', 'Le navigateur passe par un relais (proxy.mcraft.fun) pour joindre DonutSMP. Il est en panne, saturé ou bloqué par ton réseau. Réessaie dans quelques minutes, ou héberge ton propre relais (dossier minecraft-navigateur, gratuit sur Render).'];
+    if (/encryption|auth|Microsoft|login|account|profile/i.test(m)) return ['Problème de compte Microsoft.', 'DonutSMP exige un compte Microsoft avec Minecraft. Reconnecte-toi (bouton compte dans la liste des serveurs), puis relance. Si tu as plusieurs comptes, vérifie que c’est le bon.'];
+    if (/outdated|version|unsupported|protocol/i.test(m)) return ['Version refusée par le serveur.', 'Le client se connecte en 1.21.11. Dans la liste des serveurs, modifie l’entrée DonutSMP et choisis une autre version acceptée par le serveur.'];
+    if (/timed? ?out|ECONNREFUSED|ENOTFOUND|Failed to connect|Disconnected|closed/i.test(m)) return ['Connexion au serveur interrompue.', 'DonutSMP est très chargé : file d’attente, anticheat qui coupe les connexions via relais, ou serveur en maintenance. Réessaie, puis lance le diagnostic si ça persiste.'];
+    return ['Le jeu a rencontré une erreur.', m.slice(0, 200)];
+  }
+  function showHelp(title, detail, soft) {
+    if (!document.body) return;
+    if (helpEl) helpEl.remove();
+    helpEl = document.createElement('div');
+    helpEl.setAttribute('style', 'position:fixed;left:8px;right:8px;bottom:8px;z-index:2147483647;background:' + (soft ? '#1f2937' : '#7f1d1d') + ';color:#fff;font:14px/1.45 system-ui,sans-serif;padding:12px 14px;border-radius:10px;box-shadow:0 2px 14px rgba(0,0,0,.6)');
+    var b = document.createElement('b'); b.textContent = title;
+    var p = document.createElement('div'); p.textContent = detail; p.style.margin = '4px 0 8px';
+    var row = document.createElement('div');
+    function btn(label, href) { var a = document.createElement('a'); a.textContent = label; a.href = href; a.setAttribute('style', 'display:inline-block;margin:0 8px 4px 0;padding:6px 10px;border-radius:6px;background:rgba(255,255,255,.15);color:#fff;text-decoration:none'); return a; }
+    row.appendChild(btn('Diagnostic', './diagnostic'));
+    row.appendChild(btn('Réessayer', './?modal=serversList'));
+    row.appendChild(btn('Mode sans risque', './?safe=1&modal=serversList'));
+    var x = document.createElement('span'); x.textContent = '✕'; x.setAttribute('style', 'position:absolute;top:8px;right:12px;cursor:pointer;padding:0 4px');
+    x.addEventListener('click', function () { helpEl.remove(); helpEl = null; });
+    helpEl.appendChild(x); helpEl.appendChild(b); helpEl.appendChild(p); helpEl.appendChild(row);
+    document.body.appendChild(helpEl);
+  }
+  function inGameNow() { return !!(window.miscUiState && window.miscUiState.gameLoaded); }
+  var loadTimer = null;
+  function hookStatus() {
+    var orig = globalThis.setLoadingScreenStatus;
+    if (typeof orig !== 'function' || orig.__mod) return false;
+    var wrapped = function (status, isError) {
+      try {
+        if (isError && typeof status === 'string' && status) {
+          if (loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+          var ex = explain(status);
+          console.warn(TAG, 'erreur du client :', status);
+          showHelp(ex[0], ex[1], false);
+        } else if (typeof status === 'string' && status && !inGameNow()) {
+          if (helpEl && helpEl.__soft) { helpEl.remove(); helpEl = null; }
+          if (!loadTimer) loadTimer = setTimeout(function () {
+            loadTimer = null;
+            if (!inGameNow() && !helpEl) { showHelp('Le chargement prend plus de 45 secondes.', 'Le relais public ou DonutSMP répond lentement à cet instant. Tu peux patienter, réessayer, ou lancer le diagnostic pour voir ce qui bloque.', true); if (helpEl) helpEl.__soft = true; }
+          }, LOADING_LIMIT_MS);
+        } else if (status === undefined && loadTimer) { clearTimeout(loadTimer); loadTimer = null; }
+      } catch (e) {}
+      return orig.apply(this, arguments);
+    };
+    wrapped.__mod = true;
+    globalThis.setLoadingScreenStatus = wrapped;
+    return true;
+  }
+
+  // window.options et setLoadingScreenStatus sont créés par l'application après ce script : on attend.
+  var tries = 0, gotOptions = false, gotStatus = false;
   var wait = setInterval(function () {
-    if (window.options) { clearInterval(wait); governor(); }
-    else if (++tries > 600) { clearInterval(wait); }   // 60 s : client non chargé
+    if (!gotOptions && window.options) { gotOptions = true; governor(); }
+    if (!gotStatus && hookStatus()) gotStatus = true;
+    if ((gotOptions && gotStatus) || ++tries > 600) clearInterval(wait);   // 60 s : client non chargé
   }, 100);
 })();

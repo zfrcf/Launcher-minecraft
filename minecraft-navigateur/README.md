@@ -36,6 +36,16 @@ de la page avant le client :
   sous 24 (spawn de DonutSMP, foule) et remonte quand ils dépassent 50 de façon stable.
   `?hud=1` affiche un compteur FPS / distance de rendu en haut à gauche.
 
+- **Aide en cas d'échec** : si le client affiche une erreur (relais en panne, compte Microsoft,
+  version refusée, connexion coupée) ou si le chargement dépasse 45 s, un bandeau en français
+  explique la cause probable et propose : Diagnostic, Réessayer, Mode sans risque.
+- **Page `/diagnostic`** : teste en quelques secondes le relais public, le statut de DonutSMP, la
+  carte graphique (WebGL 2), WebAssembly, l'appareil, l'état du mod et le plein écran, avec la
+  solution pour chaque point en défaut. Bouton « Copier le rapport » pour le transmettre.
+- **`?safe=1`** : retire tous les réglages du mod pour ce chargement (retour aux valeurs par défaut
+  du client). Si DonutSMP charge en `?safe=1` et pas sans, le mod est en cause ; sinon le blocage
+  vient du relais ou du serveur.
+
 Les mods réels côté client (Fabric) restent la seule option pour des FPS élevés sur PC : voir
 `minecraft-fabric/`.
 
