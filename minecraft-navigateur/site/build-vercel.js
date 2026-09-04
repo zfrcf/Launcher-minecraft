@@ -23,7 +23,7 @@ const BRUT = 'https://raw.githubusercontent.com/zfrcf/Launcher-minecraft';
 //    instant ». Le déploiement devient reproductible et vérifiable.
 //
 // À mettre à jour à chaque déploiement : `git rev-parse HEAD`.
-const REVISION = '09e650844e8896a3e8f5d9ab6044f7af7be09d7c';
+const REVISION = '7089457f1965621ec5445d49bba18e06f011b8b0';
 
 // La branche de travail après le commit, comme filet si le commit n'est pas encore visible sur
 // GitHub ; main en dernier, tant que ce travail n'y est pas fusionné.
